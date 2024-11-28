@@ -1,0 +1,37 @@
+from datetime import datetime
+
+import buttons
+from app.models import Order
+from const import bot
+
+
+def profile(chat_id, user):
+    text = f'Ваш баланс: {user.balance}'
+    bot.send_message(chat_id=chat_id, text=text, reply_markup=buttons.profile())
+
+
+def history_list(chat_id, user, page):
+    text = 'Ваша история покупок'
+    markup = buttons.history(page=page, user=user)
+    bot.send_message(chat_id=chat_id, text=text, reply_markup=markup)
+
+
+def history_detail(chat_id, page, history_id):
+    history = Order.objects.get(id=history_id)
+    date = history.time
+    date_string = f'{date.day}.{date.month}.{date.year} {date.hour}:{date.minute}'
+    text = f'Название товара: {history.name}\n' \
+           f'Сумма оплаты: {history.total_product_price_str}\n' \
+           f'Способ оплаты: {history.payment_type}\n' \
+           f'Дата покупки: {date_string}'
+    markup = buttons.history_detail(page)
+    bot.send_message(chat_id=chat_id, text=text, reply_markup=markup)
+
+
+def callback(data, user, chat_id):
+    if len(data) == 0:
+        profile(chat_id=chat_id, user=user)
+    elif data[1] == 'history':
+        history_list(chat_id=chat_id, page=data, user=user)
+    elif data[1] == 'history_detail':
+        history_detail(chat_id=chat_id, page=data[2], history_id=data[1])

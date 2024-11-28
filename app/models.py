@@ -14,6 +14,7 @@ class Client(models.Model):
 
     balance = models.DecimalField(default=0, max_digits=100, decimal_places=2, verbose_name='Баланс клиента')
     referral_percent = models.IntegerField(default=1, verbose_name='Процент с покупок пользователя')
+    order_id = models.CharField(max_length=8, verbose_name='Id ордера, по которому ведется диалог')
 
 class ReferralLink(models.Model):
     CATEGORY_CHOICES = (
@@ -40,7 +41,8 @@ class ReferralLink(models.Model):
 
 class Products(models.Model):
     name = models.CharField(max_length=128, verbose_name='Имя товара')
-    price = models.DecimalField(blank=True, null=True, max_digits=100, decimal_places=2, verbose_name='Цена товара')
+    description = models.TextField(verbose_name='Описание товара')
+    price = models.DecimalField(blank=True, null=True, max_digits=100, decimal_places=2, verbose_name='Цена товара в рублях')
     need_enter_price = models.BooleanField(default=False, verbose_name='Требуется ли ввод цены покуки?')
 
 
@@ -74,8 +76,14 @@ class Order(models.Model):
         ('complite', 'Оплата пришла'),
         ('cansel', 'Оплата не требуется или не пришла')
     )
+    PAYMENT_TYPE_CHOICES = (
+        ('bybit', 'Bybit'),
+        ('wallet', 'Telegram Wallet'),
+        ('card', 'Банковская карта'),
+        ('balance', 'Баланс профиля')
+    )
     TYPE_CHOICES = (
-        ('buy', 'Купить'),
+        ('buy', 'Покупка'),
         ('top_up', 'Пополнение баланса'),
         ('not_find_product', 'Не нашел товар'),
         ('other', 'Другой вопрос')
@@ -86,7 +94,9 @@ class Order(models.Model):
                                verbose_name='Клиент заказа')
 
     product_price = models.DecimalField(max_digits=10, blank=True, null=True, decimal_places=2,
-                                        verbose_name='Цена товара')
+                                        verbose_name='Цена товара в рублях')
+    total_product_price_str = models.CharField(max_length=128, verbose_name='Цена в строке')
+
     total_product_price = models.DecimalField(max_digits=10, blank=True, null=True, decimal_places=2,
                                               verbose_name='Итоговая цена товара')
     name = models.CharField(max_length=128, blank=True, null=True, verbose_name='Название продукта')
@@ -97,6 +107,7 @@ class Order(models.Model):
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='wait_manager',
                               verbose_name='Статус заказа')
     pay_status = models.CharField(max_length=20, choices=PAY_CHOICES, default='wait', verbose_name='Статус оплаты')
+    payment_type = models.CharField(max_length=32, choices=PAYMENT_TYPE_CHOICES, verbose_name='Способ оплаты')
     type = models.CharField(max_length=20, choices=TYPE_CHOICES, default='buy', verbose_name='Тип обращения')
     time = models.DateTimeField(auto_now_add=True, verbose_name='Время заказа')
 
