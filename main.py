@@ -3,7 +3,9 @@ import os
 import django
 from django.utils.translation.trans_real import catalog
 
-from const import bot, menu
+import payment
+from const import bot
+from menu import menu
 import catalog
 import profile
 
@@ -33,9 +35,15 @@ def callback(call):
     if call.message:
         data = call.data.split('|')
         bot.clear_step_handler_by_chat_id(chat_id=chat_id)
+        if data[0] != 'chat':
+            bot.delete_message(chat_id=chat_id, message_id=call.message.id)
         if data[0] == 'menu':
             menu(chat_id=chat_id)
         elif data[0] == 'catalog':
             catalog.callback(data=data[1:], chat_id=chat_id, user=user)
         elif data[0] == 'profile':
             profile.callback(data=data[1:], chat_id=chat_id, user=user)
+        elif data[0] == 'payment':
+            payment.callback(data=data[1:], chat_id=chat_id, user=user)
+
+bot.polling(none_stop=True)

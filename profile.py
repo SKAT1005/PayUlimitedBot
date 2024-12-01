@@ -31,7 +31,7 @@ def history_detail(chat_id, page, history_id):
 def callback(data, user, chat_id):
     if len(data) == 0:
         profile(chat_id=chat_id, user=user)
-    elif data[1] == 'history':
-        history_list(chat_id=chat_id, page=data, user=user)
-    elif data[1] == 'history_detail':
+    elif data[0] == 'history':
+        history_list(chat_id=chat_id, page=data[1], user=user)
+    elif data[0] == 'history_detail':
         history_detail(chat_id=chat_id, page=data[2], history_id=data[1])

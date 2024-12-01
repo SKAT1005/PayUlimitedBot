@@ -15,6 +15,7 @@ class Client(models.Model):
     balance = models.DecimalField(default=0, max_digits=100, decimal_places=2, verbose_name='Баланс клиента')
     referral_percent = models.IntegerField(default=1, verbose_name='Процент с покупок пользователя')
     order_id = models.CharField(max_length=8, verbose_name='Id ордера, по которому ведется диалог')
+    need_to_pay = models.DecimalField(default=0, max_digits=100, decimal_places=2, verbose_name='Сумма к оплате')
 
 class ReferralLink(models.Model):
     CATEGORY_CHOICES = (
@@ -49,6 +50,7 @@ class Products(models.Model):
 class Cripto(models.Model):
     name = models.CharField(max_length=8, verbose_name='Название криптовалюты')
     course = models.DecimalField(max_digits=100, decimal_places=2, verbose_name='Курс криптовалюты')
+    dec = models.IntegerField(default=2, verbose_name='Кол-во знаков после запятой')
 
 
 class Manager(AbstractUser):
@@ -67,12 +69,13 @@ class Manager(AbstractUser):
 
 class Order(models.Model):
     STATUS_CHOICES = (
+        ('wait_create', 'Ожидает создания'),
         ('wait_manager', 'Ожидаем ответа менеджера'),
         ('dialog_with_manager', 'Общаемся с менеджером'),
         ('complite', 'Завершен'),
     )
     PAY_CHOICES = (
-        ('wait', 'Ожидае оплату'),
+        ('wait', 'Ожидаем оплату'),
         ('complite', 'Оплата пришла'),
         ('cansel', 'Оплата не требуется или не пришла')
     )
@@ -104,10 +107,10 @@ class Order(models.Model):
 
     card_holder_id = models.CharField(max_length=8, verbose_name='Id менеджера, чей картой производится оплата')
 
-    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='wait_manager',
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='wait_create',
                               verbose_name='Статус заказа')
     pay_status = models.CharField(max_length=20, choices=PAY_CHOICES, default='wait', verbose_name='Статус оплаты')
-    payment_type = models.CharField(max_length=32, choices=PAYMENT_TYPE_CHOICES, verbose_name='Способ оплаты')
+    payment_type = models.CharField(max_length=32, blank=True, null=True, choices=PAYMENT_TYPE_CHOICES, verbose_name='Способ оплаты')
     type = models.CharField(max_length=20, choices=TYPE_CHOICES, default='buy', verbose_name='Тип обращения')
     time = models.DateTimeField(auto_now_add=True, verbose_name='Время заказа')
 
