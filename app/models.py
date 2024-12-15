@@ -1,6 +1,6 @@
 import base64
 
-from django.contrib.auth.models import AbstractUser, Group, Permission
+from django.contrib.auth.models import AbstractUser, Group, Permission, PermissionsMixin
 from django.db import models
 
 from const import bot
@@ -14,7 +14,7 @@ class Client(models.Model):
 
     balance = models.DecimalField(default=0, max_digits=100, decimal_places=2, verbose_name='Баланс клиента')
     referral_percent = models.IntegerField(default=1, verbose_name='Процент с покупок пользователя')
-    order_id = models.CharField(max_length=8, verbose_name='Id ордера, по которому ведется диалог')
+    order_id = models.CharField(max_length=8, default=None, blank=True, null=True, verbose_name='Id ордера, по которому ведется диалог')
     need_to_pay = models.DecimalField(default=0, max_digits=100, decimal_places=2, verbose_name='Сумма к оплате')
 
 class ReferralLink(models.Model):
@@ -53,25 +53,32 @@ class Cripto(models.Model):
     dec = models.IntegerField(default=2, verbose_name='Кол-во знаков после запятой')
 
 
-class Manager(AbstractUser):
-    STATUS_CHOICES = (
-        ('online', 'Онлайн'),
-        ('offline', 'Офлайн'),
-        ('away', 'Отошел'),
-    )
-    commission_balance = models.DecimalField(max_digits=10, decimal_places=2, default=0.0,
-                                             verbose_name='Комиссионный баланс')
-    status = models.CharField(max_length=10, choices=STATUS_CHOICES, default='offline')
 
-    groups = models.ManyToManyField(Group, related_name='managers')
-    user_permissions = models.ManyToManyField(Permission, verbose_name='permissions',
-                                              related_name='manager_permissions')
+
+class Manager(AbstractUser):
+    commission_balance = models.DecimalField(
+        max_digits=10,
+        decimal_places=2,
+        default=0.0,
+        verbose_name="Комиссионный баланс"
+    )
+    status = models.CharField(
+        max_length=10,
+        choices=[('online', 'Онлайн'), ('offline', 'Офлайн'), ('away', 'Отошел')],
+        default='offline',
+        verbose_name="Статус"
+    )
+    is_friend = models.BooleanField(default=False, verbose_name='Является ли сотрудником отдела заботы?')
+
+    def __str__(self):
+        return self.username
 
 class Order(models.Model):
     STATUS_CHOICES = (
         ('wait_create', 'Ожидает создания'),
         ('wait_manager', 'Ожидаем ответа менеджера'),
         ('dialog_with_manager', 'Общаемся с менеджером'),
+        ('chat_with_friend', 'Направлен в отел заботы'),
         ('complite', 'Завершен'),
     )
     PAY_CHOICES = (
@@ -105,7 +112,7 @@ class Order(models.Model):
     name = models.CharField(max_length=128, blank=True, null=True, verbose_name='Название продукта')
     is_first_buy = models.BooleanField(default=False, verbose_name='Первая ли это покупка')
 
-    card_holder_id = models.CharField(max_length=8, verbose_name='Id менеджера, чей картой производится оплата')
+    card_holder_id = models.CharField(max_length=8, blank=True, null=True, verbose_name='Id менеджера, чей картой производится оплата')
 
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='wait_create',
                               verbose_name='Статус заказа')
@@ -121,8 +128,8 @@ class Text(models.Model):
         ('client', 'Клиент')
     )
     order = models.ForeignKey('Order', related_name='texts', on_delete=models.CASCADE, verbose_name='Заказ')
-    text = models.TextField(verbose_name='Текст сообщения')
-    file_id = models.CharField(blank=True, default='', max_length=256, null=True,
+    text = models.TextField(blank=True, null=True, verbose_name='Текст сообщения')
+    file_id = models.CharField(blank=True, max_length=256, null=True,
                                verbose_name='Аватарка пользователя 1')
     base64_file = models.TextField(blank=True, null=True, verbose_name='Файл в формате base64')
     time = models.DateTimeField(auto_now_add=True, verbose_name='Дата сообщения')
