@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>Авторизация</title>
+    <style>
+        body {
+          margin: 0;
+          font-family: 'Arial', sans-serif;
+          background-color: #f7f9fb;
+          display: flex;
+          height: 100vh;
+          overflow: hidden;
+          color: #333;
+          justify-content: center;
+          align-items: center;
+        }
+
+        .login-container {
+          background: #fff;
+          padding: 50px;
+          box-sizing: border-box;
+          border: 1px solid #e2e8f0;
+          border-radius: 8px;
+          width: 400px;
+          display: flex;
+          flex-direction: column;
+          gap: 20px;
+          box-shadow: 0 4px 20px rgba(0,0,0,0.05);
+          transition: box-shadow 0.3s ease;
+        }
+
+        .login-container:hover {
+          box-shadow: 0 6px 30px rgba(0,0,0,0.08);
+        }
+
+        .login-container h2 {
+          margin-top: 0;
+          text-align: center;
+          font-size: 24px;
+          font-weight: 600;
+          margin-bottom: 30px;
+          color: #333;
+        }
+
+        .login-container label {
+          font-weight: bold;
+          color: #555;
+          font-size: 14px;
+          display: block;
+          margin-bottom: 5px;
+        }
+
+        .login-container input {
+          width: 100%;
+          padding: 12px;
+          border: 1px solid #cbd5e0;
+          border-radius: 5px;
+          box-sizing: border-box;
+          font-size: 14px;
+          transition: border-color .3s, box-shadow .3s;
+        }
+
+        .login-container input:focus {
+          outline: none;
+          border-color: #1abc9c;
+          box-shadow: 0 0 0 3px rgba(26,188,156,0.1);
+        }
+
+        .login-container button {
+          background: #1abc9c;
+          color: #fff;
+          border: none;
+          padding: 14px 20px;
+          font-size: 16px;
+          border-radius: 5px;
+          cursor: pointer;
+          transition: background .3s;
+          font-weight: 500;
+        }
+
+        .login-container button:hover {
+          background: #16a085;
+        }
+
+        /* Скроллбар (если потребуется) */
+        ::-webkit-scrollbar {
+          width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+          background: #f0f0f0;
+        }
+        ::-webkit-scrollbar-thumb {
+          background: #b3b3b3;
+          border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+          background: #999;
+        }
+    </style>
+</head>
+<body>
+<div class="login-container">
+    <h2>Вход в систему</h2>
+    <form method="post">
+        {% csrf_token %}
+    <label for="username">Логин</label>
+    <input type="text" id="username" name="username" placeholder="Введите ваш логин">
+
+    <label for="password">Пароль</label>
+    <input type="password" id="password" name="password" placeholder="Введите ваш пароль">
+
+    <button type="submit">Войти</button>
+    </form>
+</div>
+</body>
+</html>
