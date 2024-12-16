@@ -1,17 +1,27 @@
-from app.models import Cripto, Order
+from app.models import Cripto, Order, Manager, Products
+from const import bot
 
 
 def get_context_main_menu(request):
-    chat = Order.objects.filter(id = request.GET.get('chat')).first()
-    client = chat.client
+    try:
+        chat = Order.objects.filter(id = request.GET.get('chat')).first()
+        client = chat.client
+        order_history = Order.objects.filter(client=client, type__in=['buy', 'not_find_product'], status='complite',
+                                             pay_status='complite')
+    except Exception as e:
+        chat = None
+        order_history = []
     usdt_course = str(Cripto.objects.get(name='USDT').course)
     status = request.user.status
-    order_history = Order.objects.filter(client=client, type__in=['buy', 'not_find_product'], status='complite', pay_status='complite')
+    managers = Manager.objects.filter(is_friend=False)
+    products = Products.objects.all()
     context = {
         'usdt_course': usdt_course,
         'status': status,
         'chat': chat,
-        'order_history': order_history
+        'order_history': order_history,
+        'managers': managers,
+        'products': products
     }
     return context
 
@@ -23,7 +33,10 @@ def get_new_order(manager):
 
 
 def send_message(request):
-    pass
+    chat_id = request.POST.get('order_id')
+    text = request.POST.get('text')
+    order = Order.objects.get(id=chat_id)
+    bot.send_message(chat_id=order.client.chat_id, text=text)
 
 
 def change_order(request):

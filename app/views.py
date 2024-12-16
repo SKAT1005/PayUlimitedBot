@@ -1,6 +1,8 @@
+from django.http import HttpResponseRedirect
 from django.shortcuts import render, redirect
 from django.contrib.auth import authenticate, login
 from django.contrib import messages
+from django.urls import reverse
 from django.views import View
 from .models import Cripto, Manager
 from .servise import get_context_main_menu, get_new_order, send_message, change_order, send_to_friend, close_order, \
@@ -37,6 +39,7 @@ class MainView(View):
 
     def post(self, request):
         manager = request.user
+        chat_id = request.POST.get('order_id')
         if not manager.is_authenticated:
             return redirect('login')
         if 'new_order' in request.POST:
@@ -51,7 +54,7 @@ class MainView(View):
             close_order(request)
         elif 'top_down_balance' in request.POST:
             top_down_balance(request)
-        return redirect('main')
+        return HttpResponseRedirect(reverse('main') + f'?chat={chat_id}')
 
 
 def change_status(request):

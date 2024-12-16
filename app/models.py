@@ -8,10 +8,11 @@ from const import bot
 
 class Client(models.Model):
     chat_id = models.CharField(max_length=128, verbose_name='ID чата в телеграмме')
+    username = models.CharField(max_length=32, unique=True, verbose_name='Ник клиента')
     join_time = models.DateTimeField(auto_now_add=True, verbose_name='Время присоединения')
     invite_ref = models.ForeignKey('ReferralLink', blank=True, null=True, on_delete=models.PROTECT, related_name='usr',
                                    verbose_name='Ссылка-приглашения')
-
+    comment = models.TextField(default='', blank=True, null=True, verbose_name='Комментарий по клиенту')
     balance = models.DecimalField(default=0, max_digits=100, decimal_places=2, verbose_name='Баланс клиента')
     referral_percent = models.IntegerField(default=1, verbose_name='Процент с покупок пользователя')
     order_id = models.CharField(max_length=8, default=None, blank=True, null=True, verbose_name='Id ордера, по которому ведется диалог')
@@ -42,9 +43,10 @@ class ReferralLink(models.Model):
 
 class Products(models.Model):
     name = models.CharField(max_length=128, verbose_name='Имя товара')
-    description = models.TextField(verbose_name='Описание товара')
+    description = models.TextField(blank=True, null=True, verbose_name='Описание товара')
     price = models.DecimalField(blank=True, null=True, max_digits=100, decimal_places=2, verbose_name='Цена товара в рублях')
     need_enter_price = models.BooleanField(default=False, verbose_name='Требуется ли ввод цены покуки?')
+    in_bot = models.BooleanField(default=False, verbose_name='Требуется ли размещение в боте?')
 
 
 class Cripto(models.Model):
@@ -82,9 +84,14 @@ class Order(models.Model):
         ('complite', 'Завершен'),
     )
     PAY_CHOICES = (
-        ('wait', 'Ожидаем оплату'),
-        ('complite', 'Оплата пришла'),
-        ('cansel', 'Оплата не требуется или не пришла')
+        ('question', 'Уточняющие вопросы'),
+        ('say_price', 'Сказал цену'),
+        ('send_requisites', 'Скинул реквизиты'),
+        ('pay_complite', 'Оплата прошла успешно'),
+        ('give_card', 'Дал карту'),
+        ('faild_pay', 'На балансе недостаточно средств'),
+        ('complite', 'Сделка завершена успешно'),
+        ('cansel', 'Сделка не завершена')
     )
     PAYMENT_TYPE_CHOICES = (
         ('bybit', 'Bybit'),
@@ -116,7 +123,7 @@ class Order(models.Model):
 
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='wait_create',
                               verbose_name='Статус заказа')
-    pay_status = models.CharField(max_length=20, choices=PAY_CHOICES, default='wait', verbose_name='Статус оплаты')
+    pay_status = models.CharField(max_length=20, choices=PAY_CHOICES, default='question', verbose_name='Статус оплаты')
     payment_type = models.CharField(max_length=32, blank=True, null=True, choices=PAYMENT_TYPE_CHOICES, verbose_name='Способ оплаты')
     type = models.CharField(max_length=20, choices=TYPE_CHOICES, default='buy', verbose_name='Тип обращения')
     time = models.DateTimeField(auto_now_add=True, verbose_name='Время заказа')

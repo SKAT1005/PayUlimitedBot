@@ -6,389 +6,393 @@
     <title>Админ панель</title>
     <style>
         body {
-          margin: 0;
-          font-family: 'Arial', sans-serif;
-          background-color: #f7f9fb;
-          display: flex;
-          height: 100vh;
-          overflow: hidden;
-          color: #333;
+            margin: 0;
+            font-family: 'Arial', sans-serif;
+            background-color: #f7f9fb;
+            display: flex;
+            height: 100vh;
+            overflow: hidden;
+            color: #333;
         }
 
         aside {
-          width: 250px;
-          background: #2d3748;
-          color: #fff;
-          display: flex;
-          flex-direction: column;
-          padding: 20px;
-          box-sizing: border-box;
+            width: 250px;
+            background: #2d3748;
+            color: #fff;
+            display: flex;
+            flex-direction: column;
+            padding: 20px;
+            box-sizing: border-box;
         }
 
         aside h1 {
-          margin: 0 0 20px 0;
-          font-size: 20px;
-          font-weight: 600;
+            margin: 0 0 20px 0;
+            font-size: 20px;
+            font-weight: 600;
         }
 
         aside ul {
-          list-style: none;
-          margin: 0;
-          padding: 0;
-          flex: 1;
+            list-style: none;
+            margin: 0;
+            padding: 0;
+            flex: 1;
         }
 
         aside li {
-          display: block;
-          padding: 10px 15px;
-          border-radius: 5px;
-          cursor: pointer;
-          transition: background .3s;
-          margin-bottom: 5px;
-          font-size: 15px;
-          font-weight: 500;
+            display: block;
+            padding: 10px 15px;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background .3s;
+            margin-bottom: 5px;
+            font-size: 15px;
+            font-weight: 500;
         }
 
         aside li:hover {
-          background: #4a5568;
+            background: #4a5568;
         }
 
         aside li.active {
-          background: #1abc9c;
-          color: #fff;
+            background: #1abc9c;
+            color: #fff;
         }
 
         main {
-          flex: 1;
-          display: flex;
-          flex-direction: column;
-          overflow: hidden;
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
         }
 
         .top-bar {
-          background: #fff;
-          padding: 10px 20px;
-          border-bottom: 1px solid #e2e8f0;
-          display: flex;
-          align-items: center;
-          justify-content: space-between;
-          box-sizing: border-box;
+            background: #fff;
+            padding: 10px 20px;
+            border-bottom: 1px solid #e2e8f0;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            box-sizing: border-box;
         }
 
         .top-bar-left, .top-bar-right {
-          display: flex;
-          align-items: center;
-          gap: 15px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
         }
 
         .status-select select {
-          padding: 6px 10px;
-          border: 1px solid #cbd5e0;
-          border-radius: 5px;
-          background: #fff;
-          font-size: 14px;
+            padding: 6px 10px;
+            border: 1px solid #cbd5e0;
+            border-radius: 5px;
+            background: #fff;
+            font-size: 14px;
         }
 
         .usdt-rate {
-          font-size: 14px;
-          background: #f0f0f0;
-          padding: 6px 10px;
-          border-radius: 5px;
-          border: 1px solid #cbd5e0;
-          color: #333;
+            font-size: 14px;
+            background: #f0f0f0;
+            padding: 6px 10px;
+            border-radius: 5px;
+            border: 1px solid #cbd5e0;
+            color: #333;
         }
 
         .new-order-button {
-          background: #1abc9c;
-          color: #fff;
-          border: none;
-          padding: 8px 15px;
-          font-size: 14px;
-          border-radius: 5px;
-          cursor: pointer;
-          transition: background .3s;
+            background: #1abc9c;
+            color: #fff;
+            border: none;
+            padding: 8px 15px;
+            font-size: 14px;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background .3s;
         }
 
         .new-order-button:hover {
-          background: #16a085;
+            background: #16a085;
         }
 
         .content {
-          flex: 1;
-          display: flex;
-          overflow: hidden;
+            flex: 1;
+            display: flex;
+            overflow: hidden;
         }
 
         .chat-list {
-          width: 220px;
-          background: #fff;
-          border-right: 1px solid #e2e8f0;
-          display: flex;
-          flex-direction: column;
+            width: 220px;
+            background: #fff;
+            border-right: 1px solid #e2e8f0;
+            display: flex;
+            flex-direction: column;
         }
 
         .chat-list-header {
-          padding: 15px;
-          border-bottom: 1px solid #e2e8f0;
-          font-size: 16px;
-          font-weight: 600;
+            padding: 15px;
+            border-bottom: 1px solid #e2e8f0;
+            font-size: 16px;
+            font-weight: 600;
         }
 
         .chat-list-scroll {
-          flex: 1;
-          overflow-y: auto;
+            flex: 1;
+            overflow-y: auto;
         }
 
         .chat-list ul {
-          list-style: none;
-          margin: 0;
-          padding: 0;
+            list-style: none;
+            margin: 0;
+            padding: 0;
         }
 
         .chat-list li {
-          padding: 10px 15px;
-          cursor: pointer;
-          transition: background .3s;
-          font-size: 14px;
-          border-bottom: 1px solid #f0f0f0;
+            padding: 10px 15px;
+            cursor: pointer;
+            transition: background .3s;
+            font-size: 14px;
+            border-bottom: 1px solid #f0f0f0;
         }
 
         .chat-list li:hover {
-          background: #f7f7f7;
+            background: #f7f7f7;
         }
 
         .chat-list li.active {
-          background: #e6fffa;
+            background: #e6fffa;
         }
 
         .chat {
-          flex: 1;
-          display: flex;
-          flex-direction: column;
-          background: #fff;
-          border-right: 1px solid #e2e8f0;
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            background: #fff;
+            border-right: 1px solid #e2e8f0;
         }
 
         .message-area {
-          flex: 1;
-          overflow-y: auto;
-          padding: 20px;
-          box-sizing: border-box;
-          display: flex;
-          flex-direction: column;
-          gap: 10px;
+            flex: 1;
+            overflow-y: auto;
+            padding: 20px;
+            box-sizing: border-box;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
         }
 
         .deal-info {
-          margin: 20px 0 10px 0;
-          font-weight: bold;
-          color: #333;
+            margin: 20px 0 10px 0;
+            font-weight: bold;
+            color: #333;
         }
 
         .deal-info .deal-date,
         .deal-info .deal-product {
-          margin-bottom: 5px;
-          font-weight: normal;
-          color: #555;
-          font-size: 14px;
+            margin-bottom: 5px;
+            font-weight: normal;
+            color: #555;
+            font-size: 14px;
         }
 
         .message-area .message {
-          max-width: 60%;
-          padding: 10px;
-          border-radius: 5px;
-          font-size: 14px;
-          line-height: 1.4;
-          background: #f0f0f0;
+            max-width: 60%;
+            padding: 10px;
+            border-radius: 5px;
+            font-size: 14px;
+            line-height: 1.4;
+            background: #f0f0f0;
         }
 
         /* Сообщения от пользователя слева */
         .message.user {
-          background: #e2f7e6;
-          margin-right: auto;
+            background: #e2f7e6;
+            margin-right: auto;
         }
 
         /* Сообщения от админа справа */
         .message.admin {
-          background: #e2e6f7;
-          margin-left: auto;
+            background: #e2e6f7;
+            margin-left: auto;
         }
 
         hr.deal-separator {
-          border: none;
-          border-top: 1px dashed #ccc;
-          margin: 20px 0;
-          width: 100%;
+            border: none;
+            border-top: 1px dashed #ccc;
+            margin: 20px 0;
+            width: 100%;
         }
 
         .chat-input {
-          display: flex;
-          padding: 10px 20px;
-          border-top: 1px solid #e2e8f0;
-          box-sizing: border-box;
+            display: flex;
+            padding: 10px 20px;
+            border-top: 1px solid #e2e8f0;
+            box-sizing: border-box;
         }
 
         .chat-input input {
-          flex: 1;
-          padding: 10px;
-          border: 1px solid #cbd5e0;
-          border-radius: 5px;
-          font-size: 14px;
-          margin-right: 10px;
+            flex: 1;
+            padding: 10px;
+            border: 1px solid #cbd5e0;
+            border-radius: 5px;
+            font-size: 14px;
+            margin-right: 10px;
         }
 
         .chat-input button {
-          background: #1abc9c;
-          color: #fff;
-          border: none;
-          padding: 10px 15px;
-          font-size: 14px;
-          border-radius: 5px;
-          cursor: pointer;
-          transition: background .3s;
+            background: #1abc9c;
+            color: #fff;
+            border: none;
+            padding: 10px 15px;
+            font-size: 14px;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background .3s;
         }
 
         .chat-input button:hover {
-          background: #16a085;
+            background: #16a085;
         }
 
         .order-info {
-          width: 270px;
-          background: #fff;
-          display: flex;
-          flex-direction: column;
-          padding: 20px;
-          box-sizing: border-box;
+            width: 270px;
+            background: #fff;
+            display: flex;
+            flex-direction: column;
+            padding: 20px;
+            box-sizing: border-box;
         }
 
         .order-info label {
-          display: block;
-          margin-bottom: 5px;
-          font-weight: bold;
-          color: #555;
-          font-size: 14px;
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+            color: #555;
+            font-size: 14px;
         }
 
         .order-info input,
         .order-info select,
         .order-info textarea {
-          width: 100%;
-          padding: 8px;
-          margin-bottom: 15px;
-          border: 1px solid #cbd5e0;
-          border-radius: 5px;
-          box-sizing: border-box;
-          font-size: 14px;
-          background: #fff;
+            width: 100%;
+            padding: 8px;
+            margin-bottom: 15px;
+            border: 1px solid #cbd5e0;
+            border-radius: 5px;
+            box-sizing: border-box;
+            font-size: 14px;
+            background: #fff;
         }
 
         .order-info textarea {
-          height: 100px;
+            height: 100px;
         }
 
         .order-info .custom-dropdown {
-          position: relative;
+            position: relative;
         }
 
         .order-info .custom-dropdown input {
-          background: #fff;
+            background: #fff;
         }
 
         .order-info .custom-dropdown ul {
-          position: absolute;
-          top: 100%;
-          left: 0; right: 0;
-          background: #fff;
-          border: 1px solid #ccc;
-          border-radius: 0 0 5px 5px;
-          max-height: 120px;
-          overflow-y: auto;
-          display: none;
-          list-style: none;
-          margin: 0;
-          padding: 0;
-          z-index: 999;
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            background: #fff;
+            border: 1px solid #ccc;
+            border-radius: 0 0 5px 5px;
+            max-height: 120px;
+            overflow-y: auto;
+            display: none;
+            list-style: none;
+            margin: 0;
+            padding: 0;
+            z-index: 999;
         }
 
         .order-info .custom-dropdown.open ul {
-          display: block;
+            display: block;
         }
 
         .order-info .custom-dropdown ul li {
-          padding: 8px;
-          cursor: pointer;
-          transition: background .3s;
-          font-size: 14px;
+            padding: 8px;
+            cursor: pointer;
+            transition: background .3s;
+            font-size: 14px;
         }
 
         .order-info .custom-dropdown ul li:hover {
-          background: #f7f7f7;
+            background: #f7f7f7;
         }
 
         .order-info-buttons {
-          display: flex;
-          flex-wrap: wrap;
-          gap: 10px;
-          margin-top: 20px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-top: 20px;
         }
 
         a {
-          color: inherit;
-          text-decoration: none;
-          display: block;
-          width: 100%;
-          height: 100%;
+            color: inherit;
+            text-decoration: none;
+            display: block;
+            width: 100%;
+            height: 100%;
         }
 
         .order-info button {
-          flex: 1;
-          text-align: center;
-          padding: 10px;
-          border: none;
-          border-radius: 5px;
-          font-size: 14px;
-          font-weight: 500;
-          cursor: pointer;
-          transition: background .3s;
-          color: #fff;
+            flex: 1;
+            text-align: center;
+            padding: 10px;
+            border: none;
+            border-radius: 5px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: background .3s;
+            color: #fff;
         }
 
         #care-dept {
-          background: #2980b9;
+            background: #2980b9;
         }
 
         #care-dept:hover {
-          background: #2471a3;
+            background: #2471a3;
         }
 
         #save-changes {
-          background: #27ae60;
+            background: #27ae60;
         }
 
         #save-changes:hover {
-          background: #229954;
+            background: #229954;
         }
 
         #close-deal {
-          background: #e74c3c;
+            background: #e74c3c;
         }
 
         #close-deal:hover {
-          background: #c0392b;
+            background: #c0392b;
         }
 
         ::-webkit-scrollbar {
-          width: 8px;
+            width: 8px;
         }
+
         ::-webkit-scrollbar-track {
-          background: #f0f0f0;
+            background: #f0f0f0;
         }
+
         ::-webkit-scrollbar-thumb {
-          background: #b3b3b3;
-          border-radius: 4px;
+            background: #b3b3b3;
+            border-radius: 4px;
         }
+
         ::-webkit-scrollbar-thumb:hover {
-          background: #999;
+            background: #999;
         }
     </style>
 </head>
@@ -396,32 +400,32 @@
 <aside>
     <h1>Моя Админка</h1>
     <ul>
-        <li class="active"><a href="{% url 'main'%}">Главная</a></li>
-        <li><a href="{% url 'mailing'%}">Рассылка</a></li>
+        <li class="active"><a href="{% url 'main' %}">Главная</a></li>
+        <li><a href="{% url 'mailing' %}">Рассылка</a></li>
         <li><a href="#">Статистика</a></li>
-        <li><a href="{% url 'profile'%}">Мой профиль </a></li>
+        <li><a href="{% url 'profile' %}">Мой профиль </a></li>
     </ul>
 </aside>
 <main>
     <div class="top-bar">
         <div class="top-bar-left">
             <div class="status-select">
-    <select id="statusSelect" onchange="location.href='{% url 'change_status'%}?status='+ this.value">
-        <option value="offline" {% if status == 'offline' %}selected{% endif %}>Оффлайн</option>
-        <option value="online" {% if status == 'online' %}selected{% endif %}>Онлайн</option>
-        <option value="away" {% if status == 'away' %}selected{% endif %}>Отошел</option>
-    </select>
-</div>
+                <select id="statusSelect" onchange="location.href='{% url 'change_status' %}?status='+ this.value">
+                    <option value="offline" {% if status == 'offline' %}selected{% endif %}>Оффлайн</option>
+                    <option value="online" {% if status == 'online' %}selected{% endif %}>Онлайн</option>
+                    <option value="away" {% if status == 'away' %}selected{% endif %}>Отошел</option>
+                </select>
+            </div>
             <div class="usdt-rate">USDT = {{ usdt_course }} RUB</div>
         </div>
-    {% if not request.user.is_friend %}
-        <div class="top-bar-right">
-            <form method="post">
-                {% csrf_token %}
-            <button class="new-order-button" name="new_order" type="submit">Взять новый заказ</button>
-            </form>
-        </div>
-    {% endif %}
+        {% if not request.user.is_friend %}
+            <div class="top-bar-right">
+                <form method="post">
+                    {% csrf_token %}
+                    <button class="new-order-button" name="new_order" type="submit">Взять новый заказ</button>
+                </form>
+            </div>
+        {% endif %}
     </div>
     <div class="content">
         <div class="chat-list">
@@ -429,115 +433,326 @@
             <div class="chat-list-scroll">
                 <ul>
                     {% for chat in request.user.orders_for_manager.all %}
-                    <li><a href="{% url 'main'%}?chat={{ chat.id }}">Чат {{ chat.id }}</a></li>
+                        <li><a href="{% url 'main' %}?chat={{ chat.id }}">Чат {{ chat.id }}</a></li>
                     {% endfor %}
                 </ul>
             </div>
         </div>
-    {% if chat %}
-        <div class="chat">
-            <div class="message-area">
-                {% for history in  order_history %}
-                <div class="deal-info">
-                    <div class="deal-date">Дата сделки: {{ history.time }}</div>
-                    <div class="deal-product">Товар: {{ history.name }}</div>
-                </div>
-                    {% for text in history.texts %}
-                        {% if text.sender == 'client' %}
-                <div class="message user">{{ text.text }}</div>
-                        {% elif text.sender == 'manager' %}
-                <div class="message admin">{{ text.text }}</div>
-                        {% endif %}
+        {% if chat %}
+            <div class="chat">
+                <div class="message-area">
+                    {% for history in  order_history %}
+                        <div class="deal-info">
+                            <div class="deal-date">Дата сделки: {{ history.time }}</div>
+                            <div class="deal-product">Товар: {{ history.name }}</div>
+                        </div>
+                        {% for text in history.texts %}
+                            {% if text.sender == 'client' %}
+                                <div class="message user">{{ text.text }}</div>
+                            {% elif text.sender == 'manager' %}
+                                <div class="message admin">{{ text.text }}</div>
+                            {% endif %}
+                        {% endfor %}
+                        <hr class="deal-separator">
                     {% endfor %}
-                <hr class="deal-separator">
-                {% endfor %}
 
-                <div class="deal-info">
-                    <div class="deal-date">Текущая сделка</div>
-                </div>
-                {% for text in history.texts %}
+                    <div class="deal-info">
+                        <div class="deal-date">Текущая сделка</div>
+                    </div>
+                    {% for text in chat.texts.all %}
                         {% if text.sender == 'client' %}
-                <div class="message user">{{ text.text }}</div>
+                            <div class="message user">{{ text.text }}</div>
                         {% elif text.sender == 'manager' %}
-                <div class="message admin">{{ text.text }}</div>
+                            <div class="message admin">{{ text.text }}</div>
                         {% endif %}
                     {% endfor %}
+                </div>
+                <div class="chat-input">
+                    <form method="post">
+                        {% csrf_token %}
+                        <input type="hidden" name="order_id" value={{ chat.id }}>
+                        <input type="text" name="text" placeholder="Введите сообщение">
+                        <button type="submit" name="send_message">Отправить</button>
+                    </form>
+                </div>
             </div>
-            <div class="chat-input">
+
+
+
+            {% if chat.type == "buy" %}
                 <form method="post">
-                <input type="text" name="text" placeholder="Введите сообщение">
-                <button type="submit" name="send_message">Отправить</button>
+                    {% csrf_token %}
+                    <div class="order-info">
+                        <input type="hidden" name="order_id" value={{ chat.id }}>
+                        <label for="client-nick">Ник клиента:</label>
+                        <input type="text" id="client-nick" readonly value={{ chat.client.username }}>
+                        <label for="client-comment">Комментарий по клиенту:</label>
+                        <textarea id="client-comment" name="comment"
+                                  placeholder="Оставьте комментарий о клиенте...">{{ chat.client.comment }}</textarea>
+
+                        <label for="reason">Причина обращения: </label>
+                        <select id="reason">
+                            <option value="problem" selected>Покупка товара</option>
+                        </select>
+
+                        <label for="product-search">Что покупает: {{ chat.name }}</label>
+
+
+                        <label for="initial-price">Изначальная стоимость:</label>
+                        <input type="number" id="initial-price" readonly value={{ chat.product_price }}>
+
+                        <label for="final-price">Конечная стоимость:</label>
+                        <input type="number" id="final-price" readonly value={{ chat.total_product_price }}>
+
+                        <label for="payment-method">Способ оплаты:</label>
+                        <select id="payment-method" name="payment_type">
+                            {% if chat.payment_type == 'bybit' %}
+                                <option value="bybit" selected>Bybit</option>
+                            {% elif chat.payment_type == 'wallet' %}
+                                <option value="wallet" selected>Telegram Wallet</option>
+                            {% elif chat.payment_type == 'card' %}
+                                <option value="card" selected>Банковская карта</option>
+                            {% elif chat.payment_type == 'balance' %}
+                                <option value="balance" selected>Баланс профиля</option>
+                            {% endif %}
+                        </select>>
+                        <label for="card-holder-search">Держатель карты:</label>
+                        <div class="custom-dropdown" id="cardholder-dropdown">
+                            <input type="text" id="card-holder-search" name="card_holder_id"
+                                   placeholder="Начните ввод...">
+                            <ul id="cardholder-list">
+                                {% for manager in managers %}
+                                    <li>{{ manager.username }}</li>
+                                {% endfor %}
+                            </ul>
+                        </div>
+
+                        <label for="payment-status">Статус оплаты:</label>
+                        <select name="pay_status" id="payment-status">
+                            <option value="question" {% if chat.pay_status == 'question' %}selected{% endif %}>
+                                Уточняющие
+                                вопросы
+                            </option>
+                            <option value="send_requisites"
+                                    {% if chat.pay_status == 'send_requisites' %}selected{% endif %}>Скинул реквизиты
+                            </option>
+                            <option value="pay_complite" {% if chat.pay_status == 'pay_complite' %}selected{% endif %}>
+                                Оплата прошла успешно
+                            </option>
+                            <option value="give_card" {% if chat.pay_status == 'give_card' %}selected{% endif %}>Дал
+                                карту
+                            </option>
+                            <option value="complite" {% if chat.pay_status == 'complite' %}selected{% endif %}>Сделка
+                                завершена успешно
+                            </option>
+                            <option value="cansel" {% if chat.pay_status == 'cansel' %}selected{% endif %}>Сделка не
+                                завершена
+                            </option>
+                        </select>
+
+                        <label for="contact-date">Дата для связи с клиентом:</label>
+                        <input type="date" id="contact-date" name="date">
+                        <div class="order-info-buttons">
+                            <button type="submit" id="care-dept" name="send_to_friend">В отдел заботы</button>
+                            <button type="submit" id="save-changes" name="change_order">Сохранить</button>
+                            <button type="submit" id="close-deal" name="close_order">Закрыть сделку</button>
+                        </div>
+                    </div>
                 </form>
-            </div>
-        </div>
-        <div class="order-info">
-            <label for="client-nick">Ник клиента:</label>
-            <input type="text" id="client-nick" value="Client123">
 
-            <label for="client-comment">Комментарий по клиенту:</label>
-            <textarea id="client-comment" placeholder="Оставьте комментарий о клиенте..."></textarea>
 
-            <label for="reason">Причина обращения:</label>
-            <select id="reason">
-                <option value="problem">Проблема</option>
-                <option value="question" selected>Вопрос</option>
-                <option value="other">Другое</option>
-            </select>
+            {% elif chat.type == "top_up" %}
+                <form method="post">
+                    {% csrf_token %}
+                    <div class="order-info">
+                        <input type="hidden" name="order_id" value={{ chat.id }}>
+                        <label for="client-nick">Ник клиента:</label>
+                        <input type="text" id="client-nick" readonly value={{ chat.client.username }}>
+                        <label for="client-comment">Комментарий по клиенту:</label>
+                        <textarea id="client-comment" name="comment"
+                                  placeholder="Оставьте комментарий о клиенте...">{{ chat.client.comment }}</textarea>
 
-            <label for="product-search">Что покупает:</label>
-            <div class="custom-dropdown" id="product-dropdown">
-                <input type="text" id="product-search" placeholder="Начните ввод...">
-                <ul id="product-list">
-                    <li>Товар A</li>
-                    <li>Товар B</li>
-                    <li>Товар C</li>
-                    <li>Товар X</li>
-                    <li>Товар Y</li>
-                    <li>Товар Z</li>
-                </ul>
-            </div>
+                        <label for="reason">Причина обращения:</label>
+                        <select id="reason">
+                            <option value="problem" selected>Пополнение баланса</option>
+                        </select>
 
-            <label for="initial-price">Изначальная стоимость:</label>
-            <input type="number" id="initial-price" value="100">
+                        <label for="initial-price">Сумма пополнения:</label>
+                        <input type="number" id="initial-price" readonly value={{ chat.product_price }}>
 
-            <label for="final-price">Конечная стоимость:</label>
-            <input type="number" id="final-price" value="100">
+                        <label for="final-price">Сумма к оплате:</label>
+                        <input type="number" id="final-price" readonly value={{ chat.total_product_price }}>
 
-            <label for="payment-method">Способ оплаты:</label>
-            <select id="payment-method">
-                <option value="card" selected>Карта</option>
-                <option value="cash">Наличные</option>
-            </select>
+                        <label for="payment-method">Способ оплаты:</label>
+                        <select id="payment-method" name="payment_type">
+                            {% if chat.payment_type == 'bybit' %}
+                                <option value="bybit" selected>Bybit</option>
+                            {% elif chat.payment_type == 'wallet' %}
+                                <option value="wallet" selected>Telegram Wallet</option>
+                            {% elif chat.payment_type == 'card' %}
+                                <option value="card" selected>Банковская карта</option>
+                            {% endif %}
+                        </select>>
 
-            <!-- Новое поле: Держатель карты -->
-            <label for="card-holder-search">Держатель карты:</label>
-            <div class="custom-dropdown" id="cardholder-dropdown">
-                <input type="text" id="card-holder-search" placeholder="Начните ввод...">
-                <ul id="cardholder-list">
-                    <li>Иван Иванов</li>
-                    <li>Петр Петров</li>
-                    <li>Сидор Сидоров</li>
-                    <li>Ольга Смирнова</li>
-                    <li>Мария Кузнецова</li>
-                </ul>
-            </div>
+                        <label for="payment-status">Статус оплаты:</label>
+                        <select name="pay_status" id="payment-status">
+                            <option value="question" {% if chat.pay_status == 'question' %}selected{% endif %}>
+                                Уточняющие
+                                вопросы
+                            </option>
+                            <option value="send_requisites"
+                                    {% if chat.pay_status == 'send_requisites' %}selected{% endif %}>Скинул реквизиты
+                            </option>
+                            <option value="pay_complite" {% if chat.pay_status == 'pay_complite' %}selected{% endif %}>
+                                Оплата прошла успешно
+                            </option>
+                            <option value="give_card" {% if chat.pay_status == 'give_card' %}selected{% endif %}>Дал
+                                карту
+                            </option>
+                            <option value="complite" {% if chat.pay_status == 'complite' %}selected{% endif %}>Сделка
+                                завершена успешно
+                            </option>
+                            <option value="cansel" {% if chat.pay_status == 'cansel' %}selected{% endif %}>Сделка не
+                                завершена
+                            </option>
+                        </select>
 
-            <label for="payment-status">Статус оплаты:</label>
-            <select id="payment-status">
-                <option value="paid" selected>Оплачено</option>
-                <option value="unpaid">Не оплачено</option>
-            </select>
+                        <div class="order-info-buttons">
+                            <button type="submit" id="save-changes" name="change_order">Сохранить</button>
+                            <button type="submit" id="close-deal" name="close_order">Пополнить баланс</button>
+                        </div>
+                    </div>
+                </form>
 
-            <label for="contact-date">Дата для связи с клиентом:</label>
-            <input type="date" id="contact-date">
 
-            <div class="order-info-buttons">
-                <button type="button" id="care-dept">В отдел заботы</button>
-                <button type="button" id="save-changes">Сохранить</button>
-                <button type="button" id="close-deal">Закрыть сделку</button>
-            </div>
-        </div>
-    {% endif %}
+            {% elif chat.type == "not_find_product" %}
+                <form method="post">
+                    {% csrf_token %}
+                    <div class="order-info">
+                        <<input type="hidden" name="order_id" value={{ chat.id }}>
+                        <label for="client-nick">Ник клиента:</label>
+                        <input type="text" id="client-nick" readonly value={{ chat.client.username }}>
+                        <label for="client-comment">Комментарий по клиенту:</label>
+                        <textarea id="client-comment" name="comment"
+                                  placeholder="Оставьте комментарий о клиенте...">{{ chat.client.comment }}</textarea>
+
+                        <label for="reason">Причина обращения:</label>
+                        <select id="reason">
+                            <option value="problem" selected>Не нашел товар</option>
+                        </select>
+
+                        <label for="product-search">Что покупает:</label>
+                        <div class="custom-dropdown" id="product-dropdown">
+                            <input type="text" id="product-search" placeholder="Начните ввод...">
+                            <ul id="product-list">
+                                {% for product in products %}
+                                    <li>{{ product.name }}</li>
+                                {% endfor %}
+                            </ul>
+                        </div>
+
+                        <label for="initial-price">Изначальная стоимость:</label>
+                        <input type="number" id="initial-price" value={{ chat.product_price }}>
+
+                        <label for="final-price">Конечная стоимость:</label>
+                        <input type="number" id="final-price" value={{ chat.total_product_price }}>
+
+                        <label for="payment-method">Способ оплаты:</label>
+                        <select id="payment-method" name="payment_type">
+                            <option value="bybit" {% if chat.payment_type == 'bybit' %}selected{% endif %}>Bybit
+                            </option>
+                            <option value="wallet" {% if chat.payment_type == 'wallet' %}selected{% endif %}>Telegram
+                                Wallet
+                            </option>
+                            <option value="card" {% if chat.payment_type == 'card' %}selected{% endif %}>Банковская
+                                карта
+                            </option>
+                            <option value="balance" {% if chat.payment_type == 'balance' %}selected{% endif %}>Баланс
+                                профиля
+                            </option>
+                        </select>>
+
+                        <!-- Новое поле: Держатель карты -->
+                        <label for="card-holder-search">Держатель карты:</label>
+                        <div class="custom-dropdown" id="cardholder-dropdown">
+                            <input type="text" id="card-holder-search" name="card_holder_id"
+                                   placeholder="Начните ввод...">
+                            <ul id="cardholder-list">
+                                {% for manager in managers %}
+                                    <li>{{ manager.username }}</li>
+                                {% endfor %}
+                            </ul>
+                        </div>
+
+                        <label for="payment-status">Статус оплаты:</label>
+                        <select name="pay_status" id="payment-status">
+                            <option value="question" {% if chat.pay_status == 'question' %}selected{% endif %}>
+                                Уточняющие
+                                вопросы
+                            </option>
+                            <option value="send_requisites"
+                                    {% if chat.pay_status == 'send_requisites' %}selected{% endif %}>Скинул реквизиты
+                            </option>
+                            <option value="pay_complite" {% if chat.pay_status == 'pay_complite' %}selected{% endif %}>
+                                Оплата прошла успешно
+                            </option>
+                            <option value="give_card" {% if chat.pay_status == 'give_card' %}selected{% endif %}>Дал
+                                карту
+                            </option>
+                            <option value="complite" {% if chat.pay_status == 'complite' %}selected{% endif %}>Сделка
+                                завершена успешно
+                            </option>
+                            {% if chat.pay_status == 'faild_pay' %}
+                                <option value="faild_pay" selected>На балансе недостаточно средств</option>
+                            {% endif %}
+                            <option value="cansel" {% if chat.pay_status == 'cansel' %}selected{% endif %}>Сделка не
+                                завершена
+                            </option>
+                        </select>
+
+                        <label for="contact-date">Дата для связи с клиентом:</label>
+                        <input type="date" id="contact-date" name="date">
+                        <div class="order-info-buttons">
+                            <button type="submit" id="care-dept" name="send_to_friend">В отдел заботы</button>
+                            <button type="submit" id="save-changes" name="change_order">Сохранить</button>
+                            {% if chat.payment_type == 'balance' %}
+                                <button type="submit" id="close-deal" name="top_down_balance">Списать деньги с баланса
+                                </button>
+                            {% endif %}
+                            <button type="submit" id="close-deal" name="close_order">Закрыть сделку</button>
+                        </div>
+                    </div>
+                </form>
+
+
+
+            {% elif chat.type == "other" %}
+                <form method="post">
+                    {% csrf_token %}
+                    <div class="order-info">
+                        <input type="hidden" name="order_id" value={{ chat.id }}>
+                        <label for="client-nick">Ник клиента:</label>
+                        <input type="text" id="client-nick" readonly value={{ chat.client.username }}>
+
+                        <label for="client-comment">Комментарий по клиенту:</label>
+                        <textarea id="client-comment" placeholder="Оставьте комментарий о клиенте..."></textarea>
+
+                        <label for="reason">Причина обращения:</label>
+                        <select id="reason">
+                            <option value="buy">Покупка</option>
+                            <option value="top_up">Пополнение баланса</option>
+                            <option value="not_find_product">Не нашел товар</option>
+                            <option value="other" selected>Другое</option>
+                        </select>
+
+                        <div class="order-info-buttons">
+                            <button type="submit" id="save-changes" name="change_order">Сохранить</button>
+                            <button type="submit" id="close-deal" name="close_order">Закрыть обращение</button>
+                        </div>
+                    </div>
+                </form>
+            {% endif %}
+        {% endif %}
     </div>
 </main>
 
@@ -549,32 +764,32 @@
 
     // Открытие дропдауна для продуктов
     searchInput.addEventListener('focus', () => {
-      dropdown.classList.add('open');
+        dropdown.classList.add('open');
     });
 
     // Закрытие при клике вне для продуктов
     document.addEventListener('click', (e) => {
-      if (!dropdown.contains(e.target) && e.target !== searchInput) {
-        dropdown.classList.remove('open');
-      }
+        if (!dropdown.contains(e.target) && e.target !== searchInput) {
+            dropdown.classList.remove('open');
+        }
     });
 
     // Фильтрация списка для продуктов
-    searchInput.addEventListener('input', function() {
-      dropdown.classList.add('open');
-      const filter = this.value.toLowerCase().trim();
-      productItems.forEach(item => {
-        const text = item.textContent.toLowerCase();
-        item.style.display = text.includes(filter) ? 'block' : 'none';
-      });
+    searchInput.addEventListener('input', function () {
+        dropdown.classList.add('open');
+        const filter = this.value.toLowerCase().trim();
+        productItems.forEach(item => {
+            const text = item.textContent.toLowerCase();
+            item.style.display = text.includes(filter) ? 'block' : 'none';
+        });
     });
 
     // Выбор элемента из списка продуктов
     productItems.forEach(item => {
-      item.addEventListener('click', () => {
-        searchInput.value = item.textContent;
-        dropdown.classList.remove('open');
-      });
+        item.addEventListener('click', () => {
+            searchInput.value = item.textContent;
+            dropdown.classList.remove('open');
+        });
     });
 
     // Дропдаун для держателей карт
@@ -584,29 +799,29 @@
     const cardholderItems = cardholderList.querySelectorAll('li');
 
     cardHolderSearchInput.addEventListener('focus', () => {
-      cardholderDropdown.classList.add('open');
+        cardholderDropdown.classList.add('open');
     });
 
     document.addEventListener('click', (e) => {
-      if (!cardholderDropdown.contains(e.target) && e.target !== cardHolderSearchInput) {
-        cardholderDropdown.classList.remove('open');
-      }
+        if (!cardholderDropdown.contains(e.target) && e.target !== cardHolderSearchInput) {
+            cardholderDropdown.classList.remove('open');
+        }
     });
 
-    cardHolderSearchInput.addEventListener('input', function() {
-      cardholderDropdown.classList.add('open');
-      const filter = this.value.toLowerCase().trim();
-      cardholderItems.forEach(item => {
-        const text = item.textContent.toLowerCase();
-        item.style.display = text.includes(filter) ? 'block' : 'none';
-      });
+    cardHolderSearchInput.addEventListener('input', function () {
+        cardholderDropdown.classList.add('open');
+        const filter = this.value.toLowerCase().trim();
+        cardholderItems.forEach(item => {
+            const text = item.textContent.toLowerCase();
+            item.style.display = text.includes(filter) ? 'block' : 'none';
+        });
     });
 
     cardholderItems.forEach(item => {
-      item.addEventListener('click', () => {
-        cardHolderSearchInput.value = item.textContent;
-        cardholderDropdown.classList.remove('open');
-      });
+        item.addEventListener('click', () => {
+            cardHolderSearchInput.value = item.textContent;
+            cardholderDropdown.classList.remove('open');
+        });
     });
 </script>
 </body>
