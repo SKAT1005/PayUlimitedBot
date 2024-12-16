@@ -495,7 +495,8 @@
                             <option value="problem" selected>Покупка товара</option>
                         </select>
 
-                        <label for="product-search">Что покупает: {{ chat.name }}</label>
+                        <label for="product">Что покупает: {{ chat.name }}</label>
+                        <input type="text" id="product" readonly value={{ chat.name }}>
 
 
                         <label for="initial-price">Изначальная стоимость:</label>
@@ -515,17 +516,13 @@
                             {% elif chat.payment_type == 'balance' %}
                                 <option value="balance" selected>Баланс профиля</option>
                             {% endif %}
-                        </select>>
+                        </select>
                         <label for="card-holder-search">Держатель карты:</label>
-                        <div class="custom-dropdown" id="cardholder-dropdown">
-                            <input type="text" id="card-holder-search" name="card_holder_id"
-                                   placeholder="Начните ввод...">
-                            <ul id="cardholder-list">
-                                {% for manager in managers %}
-                                    <li>{{ manager.username }}</li>
-                                {% endfor %}
-                            </ul>
-                        </div>
+                        <select id="reason">
+                            {% for manager in managers %}
+                                <option value={{ manager.username }} {% if manager.id == request.user.id %}selected {% endif %}>{{ manager.username }}</option>
+                            {% endfor %}
+                        </select>
 
                         <label for="payment-status">Статус оплаты:</label>
                         <select name="pay_status" id="payment-status">
@@ -674,7 +671,7 @@
 
                         <!-- Новое поле: Держатель карты -->
                         <label for="card-holder-search">Держатель карты:</label>
-                        <div class="custom-dropdown" id="cardholder-dropdown">
+                        <div class="custom-dropdown" id="cardholder-dropdown2">
                             <input type="text" id="card-holder-search" name="card_holder_id"
                                    placeholder="Начните ввод...">
                             <ul id="cardholder-list">
@@ -793,7 +790,7 @@
     });
 
     // Дропдаун для держателей карт
-    const cardholderDropdown = document.getElementById('cardholder-dropdown');
+    const cardholderDropdown = document.getElementById('cardholder-dropdown1');
     const cardHolderSearchInput = document.getElementById('card-holder-search');
     const cardholderList = document.getElementById('cardholder-list');
     const cardholderItems = cardholderList.querySelectorAll('li');
@@ -821,6 +818,37 @@
         item.addEventListener('click', () => {
             cardHolderSearchInput.value = item.textContent;
             cardholderDropdown.classList.remove('open');
+        });
+    });
+
+    const cardholderDropdown1 = document.getElementById('cardholder-dropdown2');
+    const cardHolderSearchInput1 = document.getElementById('card-holder-search');
+    const cardholderList1 = document.getElementById('cardholder-list');
+    const cardholderItems1 = cardholderList1.querySelectorAll('li');
+
+    cardHolderSearchInput1.addEventListener('focus', () => {
+        cardholderDropdown1.classList.add('open');
+    });
+
+    document.addEventListener('click', (e) => {
+        if (!cardholderDropdown1.contains(e.target) && e.target !== cardHolderSearchInput1) {
+            cardholderDropdown1.classList.remove('open');
+        }
+    });
+
+    cardHolderSearchInput1.addEventListener('input', function () {
+        cardholderDropdown1.classList.add('open');
+        const filter = this.value.toLowerCase().trim();
+        cardholderItems1.forEach(item => {
+            const text = item.textContent.toLowerCase();
+            item.style.display = text.includes(filter) ? 'block' : 'none';
+        });
+    });
+
+    cardholderItems1.forEach(item => {
+        item.addEventListener('click', () => {
+            cardHolderSearchInput1.value = item.textContent;
+            cardholderDropdown1.classList.remove('open');
         });
     });
 </script>

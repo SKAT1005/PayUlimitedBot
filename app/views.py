@@ -43,7 +43,9 @@ class MainView(View):
         if not manager.is_authenticated:
             return redirect('login')
         if 'new_order' in request.POST:
-            get_new_order(manager)
+            chat_id = get_new_order(manager)
+            if not chat_id:
+                return HttpResponseRedirect(reverse('main'))
         elif 'send_message' in request.POST:
             send_message(request)
         elif 'change_order' in request.POST:

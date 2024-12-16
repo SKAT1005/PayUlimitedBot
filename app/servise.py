@@ -1,4 +1,4 @@
-from app.models import Cripto, Order, Manager, Products
+from app.models import Cripto, Order, Manager, Products, Text
 from const import bot
 
 
@@ -28,14 +28,19 @@ def get_context_main_menu(request):
 
 def get_new_order(manager):
     order = Order.objects.filter(status='wait_manager').order_by('texts__time').first()
-    order.manager = manager
-    order.save(update_fields=['manager'])
+    if order:
+        order.manager = manager
+        order.status = 'dialog_with_manager'
+        order.save(update_fields=['manager', 'status'])
+        return order.id
+    return None
 
 
 def send_message(request):
     chat_id = request.POST.get('order_id')
     text = request.POST.get('text')
     order = Order.objects.get(id=chat_id)
+    Text.objects.create(sender='manager', text=text, order=order)
     bot.send_message(chat_id=order.client.chat_id, text=text)
 
 
