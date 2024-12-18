@@ -27,7 +27,8 @@ def continue_payment(chat_id, user, order_id, type, currency=None):
         price_in_cripto = round(order.total_product_price / cripto.course, cripto.dec)
         order.total_product_price_str = f'{price_in_cripto} {currency}'
     if type in ['balance', 'card']:
-        order.total_product_price_str = f'{order.total_product_price}₽'
+        usdt_cource = Cripto.objects.get(name='USDT').course
+        order.total_product_price_str = f'{order.total_product_price*usdt_cource} ₽'
     order.save(update_fields=['total_product_price_str'])
     if Manager.objects.filter(status='online').count() == 0:
         attention = '\n\nВнимание! На данный момент все менеджеры заняты, время ответа может быть больше обычного. С вами свяжется первый освободившийся менеджер.'
@@ -43,7 +44,7 @@ def continue_payment(chat_id, user, order_id, type, currency=None):
                              reply_markup=buttons.accept(order_id=order_id, type=type))
     elif type == 'card':
         bot.send_message(chat_id=chat_id,
-                         text='Подтвердите то, что вы хотите произвести оплату картой. После подтверждения с вами свяжется менеджер, чтобы передать вам реквезиты для оплаты' + attention,
+                         text=f'У вас к оплате {order.total_product_price_str} рублей. Подтвердите то, что вы хотите произвести оплату картой. После подтверждения с вами свяжется менеджер, чтобы передать вам реквезиты для оплаты' + attention,
                          reply_markup=buttons.accept(order_id=order_id, type=type))
     else:
         if not currency:
@@ -58,12 +59,10 @@ def continue_payment(chat_id, user, order_id, type, currency=None):
 
 
 def calculate_total_price(amount):
-    usdt_course = Cripto.objects.get(name='USDT').course
-    amount_in_usdt = amount / usdt_course
     total_amount = amount
-    if amount_in_usdt <= 20:
+    if amount <= 20:
         total_amount *= decimal.Decimal(1.25)
-    elif amount_in_usdt <= 50:
+    elif amount <= 50:
         total_amount *= decimal.Decimal(1.15)
     else:
         total_amount *= decimal.Decimal(1.1)
@@ -115,7 +114,7 @@ def tup_up_balance(message, chat_id, user, order_id=False, product=False):
                 top_up = False
             else:
                 top_up = True
-            text = f'У вас к оплате {total_amount}₽. Выберите способ оплаты'
+            text = f'У вас к оплате {total_amount}$. Выберите способ оплаты'
             bot.send_message(chat_id=chat_id, text=text,
                              reply_markup=buttons.payment_method(order_id=order.id, need_enter_new_amount=True,
                                                                  top_up=top_up))
@@ -129,11 +128,10 @@ def buy_step_one(chat_id, user, prod_id):
         bot.register_next_step_handler(msg, tup_up_balance, chat_id, user, False, product)
     else:
         amount = product.price
-        total_amount = calculate_total_price(amount)
-        order = create_order(user=user, amount=amount, total_amount=total_amount, product=product)
-        text = f'У вас к оплате {total_amount}₽. Выберите способ оплаты'
+        order = create_order(user=user, amount=amount, total_amount=amount, product=product)
+        text = f'У вас к оплате {amount}м$. Выберите способ оплаты'
         bot.send_message(chat_id=chat_id, text=text,
-                         reply_markup=buttons.payment_method(order_id=order.id, need_enter_new_amount=True))
+                         reply_markup=buttons.payment_method(order_id=order.id, need_enter_new_amount=False))
 
 
 def change_payment_method(chat_id, order_id):
@@ -157,7 +155,9 @@ def accept(chat_id, user, order_id, type):
         user.save(update_fields=['balance'])
         order.pay_status = 'complite'
         order.save(update_fields=['pay_status'])
-    bot.send_message(chat_id=chat_id, text='Ожидайте. Скоро с вами свяжется менеджер для выполнения вашего заказа', reply_markup=buttons.go_to_menu())
+    user.order_id = order_id.id
+    user.save(update_fields=['order_id'])
+    bot.send_message(chat_id=chat_id, text='Ожидайте. Скоро с вами свяжется менеджер для выполнения вашего заказа. Если хотите что-то узнать - напишите в чат с ботом', reply_markup=buttons.go_to_menu())
 
 
 def callback(data, user, chat_id):

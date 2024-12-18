@@ -127,6 +127,7 @@ class Order(models.Model):
     payment_type = models.CharField(max_length=32, blank=True, null=True, choices=PAYMENT_TYPE_CHOICES, verbose_name='Способ оплаты')
     type = models.CharField(max_length=20, choices=TYPE_CHOICES, default='buy', verbose_name='Тип обращения')
     time = models.DateTimeField(auto_now_add=True, verbose_name='Время заказа')
+    have_new_message = models.BooleanField(default=False, verbose_name='Есть ли новое сообщение?')
 
 
 class Text(models.Model):
@@ -138,6 +139,9 @@ class Text(models.Model):
     text = models.TextField(blank=True, null=True, verbose_name='Текст сообщения')
     file_id = models.CharField(blank=True, max_length=256, null=True,
                                verbose_name='Аватарка пользователя 1')
+    is_text = models.BooleanField(default=True, verbose_name='Является ли сообщение текстом')
+    is_photo = models.BooleanField(default=False, verbose_name='Является ли сообщение фото')
+    is_pdf = models.BooleanField(default=False, verbose_name='Является ли сообщение pdf')
     base64_file = models.TextField(blank=True, null=True, verbose_name='Файл в формате base64')
     time = models.DateTimeField(auto_now_add=True, verbose_name='Дата сообщения')
     sender = models.CharField(max_length=10, choices=SENDER_CHOISE, verbose_name='Отправитель')
@@ -145,7 +149,7 @@ class Text(models.Model):
     def get_data(self):
         if not self.base64_file:
             try:
-                type, file_id = self.file_id.split()
+                file_id = self.file_id
                 file_info = bot.get_file(file_id)
                 downloaded_file = bot.download_file(file_info.file_path)
                 encoded_string = base64.b64encode(downloaded_file).decode('utf-8')

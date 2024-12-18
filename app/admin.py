@@ -1,10 +1,15 @@
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin
 
-from .models import ReferralLink, Client, Manager, Products, Cripto, Order
+from .models import ReferralLink, Client, Manager, Products, Cripto, Order, Text
 
 @admin.register(Order)
 class OrderAdmin(admin.ModelAdmin):
+    pass
+
+
+@admin.register(Text)
+class TextAdmin(admin.ModelAdmin):
     pass
 
 @admin.register(ReferralLink)

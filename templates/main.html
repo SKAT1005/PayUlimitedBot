@@ -448,7 +448,17 @@
                         </div>
                         {% for text in history.texts %}
                             {% if text.sender == 'client' %}
-                                <div class="message user">{{ text.text }}</div>
+                                {% if text.is_text %}
+    <div class="message user">{{ text.text }}</div>
+{% elif text.is_photo %}
+    <img src="data:image/png;base64,{{text.get_data}}" alt="Фото 1">
+{% elif text.is_pdf %}
+    <div class="message-area">
+    <a href="data:application/pdf;base64,{{tet.get_data}}" download="document.pdf" title="Скачать PDF">
+        <img src="https://tk-lider.ru/images/banner_png.png" alt="PDF Icon" style="width:50px;height:auto;">
+        <br>Скачать PDF
+    </a>
+{% endif %}
                             {% elif text.sender == 'manager' %}
                                 <div class="message admin">{{ text.text }}</div>
                             {% endif %}
@@ -461,7 +471,20 @@
                     </div>
                     {% for text in chat.texts.all %}
                         {% if text.sender == 'client' %}
-                            <div class="message user">{{ text.text }}</div>
+                            {% if text.is_text %}
+    <div class="message user">{{ text.text }}</div>
+{% elif text.is_photo %}
+        <div class="message user">
+    <img src="data:image/png;base64,{{text.get_data}}" style="width:250px;height:auto;" alt="Фото 1">
+        </div>
+{% elif text.is_pdf %}
+    <div class="message user">
+    <a href="data:application/pdf;base64,{{text.get_data}}" download="document.pdf" title="Скачать PDF">
+        <img src="https://tk-lider.ru/images/banner_png.png" alt="PDF Icon" style="width:50px;height:auto;">
+        <br>Скачать PDF
+    </a>
+    </div>
+{% endif %}
                         {% elif text.sender == 'manager' %}
                             <div class="message admin">{{ text.text }}</div>
                         {% endif %}
@@ -754,6 +777,28 @@
 </main>
 
 <script>
+    const messageArea = document.querySelector('.message-area');
+        if (messageArea) {
+            messageArea.scrollTop = messageArea.scrollHeight;
+        }
+        console.log("Скрипт загружен");
+    function checkNewMessages() {
+        console.log('Функция checkNewMessages вызвана');
+        fetch('http://127.0.0.1:8000/check_new_messages?chat={{chat.id}}')
+            .then(response => response.json())
+            .then(data => {
+                if (data.newMessages) {
+                    location.reload();
+                }
+            })
+            .catch(error => {
+                console.error('Ошибка при проверке новых сообщений:', error);
+            });
+    }
+
+    setInterval(checkNewMessages, 1000);
+
+
     const dropdown = document.getElementById('product-dropdown');
     const searchInput = document.getElementById('product-search');
     const productList = document.getElementById('product-list');
@@ -789,68 +834,7 @@
         });
     });
 
-    // Дропдаун для держателей карт
-    const cardholderDropdown = document.getElementById('cardholder-dropdown1');
-    const cardHolderSearchInput = document.getElementById('card-holder-search');
-    const cardholderList = document.getElementById('cardholder-list');
-    const cardholderItems = cardholderList.querySelectorAll('li');
 
-    cardHolderSearchInput.addEventListener('focus', () => {
-        cardholderDropdown.classList.add('open');
-    });
-
-    document.addEventListener('click', (e) => {
-        if (!cardholderDropdown.contains(e.target) && e.target !== cardHolderSearchInput) {
-            cardholderDropdown.classList.remove('open');
-        }
-    });
-
-    cardHolderSearchInput.addEventListener('input', function () {
-        cardholderDropdown.classList.add('open');
-        const filter = this.value.toLowerCase().trim();
-        cardholderItems.forEach(item => {
-            const text = item.textContent.toLowerCase();
-            item.style.display = text.includes(filter) ? 'block' : 'none';
-        });
-    });
-
-    cardholderItems.forEach(item => {
-        item.addEventListener('click', () => {
-            cardHolderSearchInput.value = item.textContent;
-            cardholderDropdown.classList.remove('open');
-        });
-    });
-
-    const cardholderDropdown1 = document.getElementById('cardholder-dropdown2');
-    const cardHolderSearchInput1 = document.getElementById('card-holder-search');
-    const cardholderList1 = document.getElementById('cardholder-list');
-    const cardholderItems1 = cardholderList1.querySelectorAll('li');
-
-    cardHolderSearchInput1.addEventListener('focus', () => {
-        cardholderDropdown1.classList.add('open');
-    });
-
-    document.addEventListener('click', (e) => {
-        if (!cardholderDropdown1.contains(e.target) && e.target !== cardHolderSearchInput1) {
-            cardholderDropdown1.classList.remove('open');
-        }
-    });
-
-    cardHolderSearchInput1.addEventListener('input', function () {
-        cardholderDropdown1.classList.add('open');
-        const filter = this.value.toLowerCase().trim();
-        cardholderItems1.forEach(item => {
-            const text = item.textContent.toLowerCase();
-            item.style.display = text.includes(filter) ? 'block' : 'none';
-        });
-    });
-
-    cardholderItems1.forEach(item => {
-        item.addEventListener('click', () => {
-            cardHolderSearchInput1.value = item.textContent;
-            cardholderDropdown1.classList.remove('open');
-        });
-    });
 </script>
 </body>
 </html>

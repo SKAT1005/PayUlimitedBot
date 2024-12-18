@@ -154,3 +154,13 @@ def accept(order_id, type):
                                                  callback_data=f'payment|change_payment_method|{order_id}')
     markup.add(accept, change_payment_method, cansel)
     return markup
+
+
+"""Чат с менеджером"""
+
+
+def go_to_chat(order_id):
+    markup = InlineKeyboardMarkup()
+    go_to_chat = InlineKeyboardButton('Перейти в чат', callback_data=f'go_to_chat|{order_id}')
+    markup.add(go_to_chat)
+    return markup

@@ -1,10 +1,11 @@
-from django.http import HttpResponseRedirect
+from django.contrib.auth.decorators import login_required
+from django.http import HttpResponseRedirect, JsonResponse
 from django.shortcuts import render, redirect
 from django.contrib.auth import authenticate, login
 from django.contrib import messages
 from django.urls import reverse
 from django.views import View
-from .models import Cripto, Manager
+from .models import Cripto, Manager, Order
 from .servise import get_context_main_menu, get_new_order, send_message, change_order, send_to_friend, close_order, \
     top_down_balance
 
@@ -57,6 +58,13 @@ class MainView(View):
         elif 'top_down_balance' in request.POST:
             top_down_balance(request)
         return HttpResponseRedirect(reverse('main') + f'?chat={chat_id}')
+
+@login_required
+def get_messages(request):
+    chat_id = request.GET.get('chat')
+    order = Order.objects.get(id=chat_id)
+    has_new = order.have_new_message
+    return JsonResponse({'newMessages': has_new})
 
 
 def change_status(request):
