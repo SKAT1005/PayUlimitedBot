@@ -155,7 +155,7 @@ def accept(chat_id, user, order_id, type):
         user.save(update_fields=['balance'])
         order.pay_status = 'complite'
         order.save(update_fields=['pay_status'])
-    user.order_id = order_id.id
+    user.order_id = order_id
     user.save(update_fields=['order_id'])
     bot.send_message(chat_id=chat_id, text='Ожидайте. Скоро с вами свяжется менеджер для выполнения вашего заказа. Если хотите что-то узнать - напишите в чат с ботом', reply_markup=buttons.go_to_menu())
 

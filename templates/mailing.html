@@ -270,10 +270,10 @@
 <aside>
     <h1>Моя Админка</h1>
     <ul>
-        <li><a href="main.html">Главная</a></li>
-        <li class="active"><a href="mailing.html">Рассылка</a></li>
+        <li class="active"><a href="{% url 'main' %}">Главная</a></li>
+        <li><a href="{% url 'mailing' %}">Рассылка</a></li>
         <li><a href="#">Статистика</a></li>
-        <li><a href="profile.html">Мой профиль </a></li>
+        <li><a href="{% url 'profile' %}">Мой профиль </a></li>
     </ul>
 </aside>
 <main>

@@ -7,7 +7,7 @@ from django.urls import reverse
 from django.views import View
 from .models import Cripto, Manager, Order
 from .servise import get_context_main_menu, get_new_order, send_message, change_order, send_to_friend, close_order, \
-    top_down_balance
+    top_down_balance, get_context_profile
 
 
 def login_view(request):
@@ -53,8 +53,10 @@ class MainView(View):
             change_order(request)
         elif 'send_to_friend' in request.POST :
             send_to_friend(request)
+            return redirect('main')
         elif 'close_order' in request.POST:
             close_order(request)
+            return redirect('login')
         elif 'top_down_balance' in request.POST:
             top_down_balance(request)
         return HttpResponseRedirect(reverse('main') + f'?chat={chat_id}')
@@ -84,4 +86,5 @@ class MailingView(View):
 
 class ProfileView(View):
     def get(self, request):
-        return render(request,'profile.html')
+        context = get_context_profile(request.user)
+        return render(request,'profile.html', context=context)

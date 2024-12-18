@@ -3,6 +3,7 @@ import os
 
 import django
 from django.db.models import TextField
+from django.utils import timezone
 from django.utils.translation.trans_real import catalog
 
 import payment
@@ -20,7 +21,7 @@ from app.models import ReferralLink, Client, Order, Text
 @bot.message_handler(commands=['start'])
 def start(message):
     chat_id = message.chat.id
-    user, _ = Client.objects.get_or_create(chat_id=chat_id)
+    user, _ = Client.objects.get_or_create(chat_id=chat_id, username=message.from_user.username)
     if _:
         msg = message.text.split()
         if len(msg) == 2:
@@ -36,6 +37,11 @@ def chat(message):
     client = Client.objects.get(chat_id=chat_id)
     if client.order_id:
         order = Order.objects.get(id=client.order_id)
+        order.last_message_time = timezone.now()
+        order.save(update_fields=['last_message_time'])
+        if order.status == 'chat_with_friend':
+            order.status = 'dialog_with_manager'
+            order.save(update_fields=['status'])
         if message.content_type == 'text':
             Text.objects.create(order=order, text=message.text, sender='client')
         elif message.content_type == 'photo':

@@ -150,10 +150,10 @@ aside li a {
   <aside>
     <h1>Моя Админка</h1>
     <ul>
-      <li><a href="main.html">Главная</a></li>
-      <li><a href="mailing.html">Рассылка</a></li>
-      <li><a href="#">Статистика</a></li>
-      <li class="active"><a href="profile.html">Мой профиль </a></li>
+        <li class="active"><a href="{% url 'main' %}">Главная</a></li>
+        <li><a href="{% url 'mailing' %}">Рассылка</a></li>
+        <li><a href="#">Статистика</a></li>
+        <li><a href="{% url 'profile' %}">Мой профиль </a></li>
     </ul>
   </aside>
   <main>
@@ -164,7 +164,7 @@ aside li a {
       </div>
       <div class="top-bar-right">
         <div class="balance-info" style="font-weight:600; font-size:14px;">
-          Баланс: 5000 р.
+          Баланс: {{ request.user.commission_balance }} $.
         </div>
       </div>
     </div>
@@ -180,24 +180,14 @@ aside li a {
             </tr>
           </thead>
           <tbody>
+          {% for commission in commissions %}
             <tr>
-              <td>01.12.2024</td>
-              <td>3000 р.</td>
-              <td>1500 р.</td>
-              <td>4500 р.</td>
+              <td>{{ commission.date }}</td>
+              <td>{{ commission.manager }}</td>
+              <td>{{ commission.card_holder }}</td>
+              <td>{{ commission.total }}</td>
             </tr>
-            <tr>
-              <td>02.12.2024</td>
-              <td>4000 р.</td>
-              <td>2000 р.</td>
-              <td>6000 р.</td>
-            </tr>
-            <tr>
-              <td>03.12.2024</td>
-              <td>2500 р.</td>
-              <td>1000 р.</td>
-              <td>3500 р.</td>
-            </tr>
+          {% endfor %}
           </tbody>
         </table>
       </div>

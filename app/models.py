@@ -112,7 +112,7 @@ class Order(models.Model):
 
     product_price = models.DecimalField(max_digits=10, blank=True, null=True, decimal_places=2,
                                         verbose_name='Цена товара в рублях')
-    total_product_price_str = models.CharField(max_length=128, verbose_name='Цена в строке')
+    total_product_price_str = models.CharField(max_length=128, verbose_name='Цена в строке', blank=True)
 
     total_product_price = models.DecimalField(max_digits=10, blank=True, null=True, decimal_places=2,
                                               verbose_name='Итоговая цена товара')
@@ -126,8 +126,10 @@ class Order(models.Model):
     pay_status = models.CharField(max_length=20, choices=PAY_CHOICES, default='question', verbose_name='Статус оплаты')
     payment_type = models.CharField(max_length=32, blank=True, null=True, choices=PAYMENT_TYPE_CHOICES, verbose_name='Способ оплаты')
     type = models.CharField(max_length=20, choices=TYPE_CHOICES, default='buy', verbose_name='Тип обращения')
+    date = models.DateField(blank=True, null=True, verbose_name='Дата для связи с клиентов')
     time = models.DateTimeField(auto_now_add=True, verbose_name='Время заказа')
     have_new_message = models.BooleanField(default=False, verbose_name='Есть ли новое сообщение?')
+    last_message_time = models.DateTimeField(blank=True, null=True, verbose_name='Время последнего сообщения')
 
 
 class Text(models.Model):

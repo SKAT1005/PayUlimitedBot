@@ -259,6 +259,8 @@
             flex-direction: column;
             padding: 20px;
             box-sizing: border-box;
+            overflow-y: auto; /* Для прокрутки */
+            max-height: calc(100vh - 60px); /* Предполагая, что .top-bar имеет высоту 60px */
         }
 
         .order-info label {
@@ -432,63 +434,78 @@
             <div class="chat-list-header">Чаты</div>
             <div class="chat-list-scroll">
                 <ul>
-                    {% for chat in request.user.orders_for_manager.all %}
-                        <li><a href="{% url 'main' %}?chat={{ chat.id }}">Чат {{ chat.id }}</a></li>
+                    {% for chat in manager_chats %}
+                        <li>
+                            <a href="{% url 'main' %}?chat={{ chat.id }}">
+                                Чат {{ chat.id }}
+                                {% if chat.have_new_message %}
+                                    <svg class="unread-icon" width="14" height="14" viewBox="0 0 14 14" fill="none"
+                                         xmlns="http://www.w3.org/2000/svg">
+                                        <circle cx="7" cy="7" r="6" fill="blue"/>
+                                    </svg>
+                                {% endif %}
+                            </a>
+                        </li>
                     {% endfor %}
                 </ul>
             </div>
         </div>
         {% if chat %}
             <div class="chat">
-                <div class="message-area">
-                    {% for history in  order_history %}
-                        <div class="deal-info">
-                            <div class="deal-date">Дата сделки: {{ history.time }}</div>
-                            <div class="deal-product">Товар: {{ history.name }}</div>
-                        </div>
-                        {% for text in history.texts %}
-                            {% if text.sender == 'client' %}
-                                {% if text.is_text %}
-    <div class="message user">{{ text.text }}</div>
-{% elif text.is_photo %}
-    <img src="data:image/png;base64,{{text.get_data}}" alt="Фото 1">
-{% elif text.is_pdf %}
-    <div class="message-area">
-    <a href="data:application/pdf;base64,{{tet.get_data}}" download="document.pdf" title="Скачать PDF">
-        <img src="https://tk-lider.ru/images/banner_png.png" alt="PDF Icon" style="width:50px;height:auto;">
-        <br>Скачать PDF
-    </a>
-{% endif %}
-                            {% elif text.sender == 'manager' %}
-                                <div class="message admin">{{ text.text }}</div>
-                            {% endif %}
-                        {% endfor %}
-                        <hr class="deal-separator">
-                    {% endfor %}
-
+            <div class="message-area">
+                {% for history in  order_history %}
                     <div class="deal-info">
-                        <div class="deal-date">Текущая сделка</div>
+                        <div class="deal-date">Дата сделки: {{ history.time }}</div>
+                        <div class="deal-product">Товар: {{ history.name }}</div>
                     </div>
-                    {% for text in chat.texts.all %}
+                    {% for text in history.texts.all %}
                         {% if text.sender == 'client' %}
                             {% if text.is_text %}
-    <div class="message user">{{ text.text }}</div>
-{% elif text.is_photo %}
-        <div class="message user">
-    <img src="data:image/png;base64,{{text.get_data}}" style="width:250px;height:auto;" alt="Фото 1">
-        </div>
-{% elif text.is_pdf %}
-    <div class="message user">
-    <a href="data:application/pdf;base64,{{text.get_data}}" download="document.pdf" title="Скачать PDF">
-        <img src="https://tk-lider.ru/images/banner_png.png" alt="PDF Icon" style="width:50px;height:auto;">
-        <br>Скачать PDF
-    </a>
-    </div>
-{% endif %}
+                                <div class="message user">{{ text.text }}</div>
+                            {% elif text.is_photo %}
+                                <img src="data:image/png;base64,{{ text.get_data }}" alt="Фото 1">
+                            {% elif text.is_pdf %}
+                                <div class="message-area">
+                                <a href="data:application/pdf;base64,{{ tet.get_data }}" download="document.pdf"
+                                   title="Скачать PDF">
+                                    <img src="https://tk-lider.ru/images/banner_png.png" alt="PDF Icon"
+                                         style="width:50px;height:auto;">
+                                    <br>Скачать PDF
+                                </a>
+                            {% endif %}
                         {% elif text.sender == 'manager' %}
                             <div class="message admin">{{ text.text }}</div>
                         {% endif %}
                     {% endfor %}
+                    <hr class="deal-separator">
+                {% endfor %}
+
+                <div class="deal-info">
+                    <div class="deal-date">Текущая сделка</div>
+                </div>
+                {% for text in chat.texts.all %}
+                    {% if text.sender == 'client' %}
+                        {% if text.is_text %}
+                            <div class="message user">{{ text.text }}</div>
+                        {% elif text.is_photo %}
+                            <div class="message user">
+                                <img src="data:image/png;base64,{{ text.get_data }}" style="width:250px;height:auto;"
+                                     alt="Фото 1">
+                            </div>
+                        {% elif text.is_pdf %}
+                            <div class="message user">
+                                <a href="data:application/pdf;base64,{{ text.get_data }}" download="document.pdf"
+                                   title="Скачать PDF">
+                                    <img src="https://tk-lider.ru/images/banner_png.png" alt="PDF Icon"
+                                         style="width:50px;height:auto;">
+                                    <br>Скачать PDF
+                                </a>
+                            </div>
+                        {% endif %}
+                    {% elif text.sender == 'manager' %}
+                        <div class="message admin">{{ text.text }}</div>
+                    {% endif %}
+                {% endfor %}
                 </div>
                 <div class="chat-input">
                     <form method="post">
@@ -500,12 +517,13 @@
                 </div>
             </div>
 
-
-
             {% if chat.type == "buy" %}
                 <form method="post">
                     {% csrf_token %}
                     <div class="order-info">
+                        {% if chat.is_first_buy %}
+                            <h2>Внимание, это первая покупка клиента</h2>
+                        {% endif %}
                         <input type="hidden" name="order_id" value={{ chat.id }}>
                         <label for="client-nick">Ник клиента:</label>
                         <input type="text" id="client-nick" readonly value={{ chat.client.username }}>
@@ -541,9 +559,9 @@
                             {% endif %}
                         </select>
                         <label for="card-holder-search">Держатель карты:</label>
-                        <select id="reason">
+                        <select id="reason" name="card_holder_id">
                             {% for manager in managers %}
-                                <option value={{ manager.username }} {% if manager.id == request.user.id %}selected {% endif %}>{{ manager.username }}</option>
+                                <option value={{ manager.id }} {% if manager.id == request.user.id %}selected {% endif %}>{{ manager.username }}</option>
                             {% endfor %}
                         </select>
 
@@ -573,9 +591,14 @@
                         <label for="contact-date">Дата для связи с клиентом:</label>
                         <input type="date" id="contact-date" name="date">
                         <div class="order-info-buttons">
-                            <button type="submit" id="care-dept" name="send_to_friend">В отдел заботы</button>
-                            <button type="submit" id="save-changes" name="change_order">Сохранить</button>
-                            <button type="submit" id="close-deal" name="close_order">Закрыть сделку</button>
+                            {% if request.user.is_friend %}
+                                <button type="submit" id="save-changes" name="send_manager">Отправить менеджерам
+                                </button>
+                            {% else %}
+                                <button type="submit" id="care-dept" name="send_to_friend">В отдел заботы</button>
+                                <button type="submit" id="save-changes" name="change_order">Сохранить</button>
+                                <button type="submit" id="close-deal" name="close_order">Закрыть сделку</button>
+                            {% endif %}
                         </div>
                     </div>
                 </form>
@@ -598,21 +621,23 @@
                         </select>
 
                         <label for="initial-price">Сумма пополнения:</label>
-                        <input type="number" id="initial-price" readonly value={{ chat.product_price }}>
+                        <input type="number" id="initial-price" name="product_price" value={{ chat.product_price }}>
 
                         <label for="final-price">Сумма к оплате:</label>
-                        <input type="number" id="final-price" readonly value={{ chat.total_product_price }}>
+                        <input type="number" id="final-price" name="total_product_price"
+                               value={{ chat.total_product_price }}>
 
                         <label for="payment-method">Способ оплаты:</label>
                         <select id="payment-method" name="payment_type">
-                            {% if chat.payment_type == 'bybit' %}
-                                <option value="bybit" selected>Bybit</option>
-                            {% elif chat.payment_type == 'wallet' %}
-                                <option value="wallet" selected>Telegram Wallet</option>
-                            {% elif chat.payment_type == 'card' %}
-                                <option value="card" selected>Банковская карта</option>
-                            {% endif %}
-                        </select>>
+                            <option value="bybit" {% if chat.payment_type == 'bybit' %}selected{% endif %}>Bybit
+                            </option>
+                            <option value="wallet" {% if chat.payment_type == 'wallet' %}selected{% endif %}>Telegram
+                                Wallet
+                            </option>
+                            <option value="card" {% if chat.payment_type == 'card' %}selected{% endif %}>Банковская
+                                карта
+                            </option>
+                        </select>
 
                         <label for="payment-status">Статус оплаты:</label>
                         <select name="pay_status" id="payment-status">
@@ -649,7 +674,10 @@
                 <form method="post">
                     {% csrf_token %}
                     <div class="order-info">
-                        <<input type="hidden" name="order_id" value={{ chat.id }}>
+                        {% if chat.is_first_buy %}
+                            <h5>Внимание, это первая покупка клиента</h5>
+                        {% endif %}
+                        <input type="hidden" name="order_id" value={{ chat.id }}>
                         <label for="client-nick">Ник клиента:</label>
                         <input type="text" id="client-nick" readonly value={{ chat.client.username }}>
                         <label for="client-comment">Комментарий по клиенту:</label>
@@ -663,7 +691,7 @@
 
                         <label for="product-search">Что покупает:</label>
                         <div class="custom-dropdown" id="product-dropdown">
-                            <input type="text" id="product-search" placeholder="Начните ввод...">
+                            <input type="text" id="product-search" name="name" placeholder="Начните ввод...">
                             <ul id="product-list">
                                 {% for product in products %}
                                     <li>{{ product.name }}</li>
@@ -672,10 +700,11 @@
                         </div>
 
                         <label for="initial-price">Изначальная стоимость:</label>
-                        <input type="number" id="initial-price" value={{ chat.product_price }}>
+                        <input type="number" id="initial-price" name="product_price" value={{ chat.product_price }}>
 
                         <label for="final-price">Конечная стоимость:</label>
-                        <input type="number" id="final-price" value={{ chat.total_product_price }}>
+                        <input type="number" id="final-price" name="total_product_price"
+                               value={{ chat.total_product_price }}>
 
                         <label for="payment-method">Способ оплаты:</label>
                         <select id="payment-method" name="payment_type">
@@ -690,19 +719,15 @@
                             <option value="balance" {% if chat.payment_type == 'balance' %}selected{% endif %}>Баланс
                                 профиля
                             </option>
-                        </select>>
+                        </select>
 
                         <!-- Новое поле: Держатель карты -->
                         <label for="card-holder-search">Держатель карты:</label>
-                        <div class="custom-dropdown" id="cardholder-dropdown2">
-                            <input type="text" id="card-holder-search" name="card_holder_id"
-                                   placeholder="Начните ввод...">
-                            <ul id="cardholder-list">
-                                {% for manager in managers %}
-                                    <li>{{ manager.username }}</li>
-                                {% endfor %}
-                            </ul>
-                        </div>
+                        <select id="reason" name="card_holder_id">
+                            {% for manager in managers %}
+                                <option value={{ manager.id }} {% if manager.id == request.user.id %}selected {% endif %}>{{ manager.username }}</option>
+                            {% endfor %}
+                        </select>
 
                         <label for="payment-status">Статус оплаты:</label>
                         <select name="pay_status" id="payment-status">
@@ -719,12 +744,12 @@
                             <option value="give_card" {% if chat.pay_status == 'give_card' %}selected{% endif %}>Дал
                                 карту
                             </option>
-                            <option value="complite" {% if chat.pay_status == 'complite' %}selected{% endif %}>Сделка
-                                завершена успешно
-                            </option>
                             {% if chat.pay_status == 'faild_pay' %}
                                 <option value="faild_pay" selected>На балансе недостаточно средств</option>
                             {% endif %}
+                            <option value="complite" {% if chat.pay_status == 'complite' %}selected{% endif %}>Сделка
+                                завершена успешно
+                            </option>
                             <option value="cansel" {% if chat.pay_status == 'cansel' %}selected{% endif %}>Сделка не
                                 завершена
                             </option>
@@ -733,13 +758,19 @@
                         <label for="contact-date">Дата для связи с клиентом:</label>
                         <input type="date" id="contact-date" name="date">
                         <div class="order-info-buttons">
-                            <button type="submit" id="care-dept" name="send_to_friend">В отдел заботы</button>
-                            <button type="submit" id="save-changes" name="change_order">Сохранить</button>
-                            {% if chat.payment_type == 'balance' %}
-                                <button type="submit" id="close-deal" name="top_down_balance">Списать деньги с баланса
+                            {% if request.user.is_friend %}
+                                <button type="submit" id="save-changes" name="send_manager">Отправить менеджерам
                                 </button>
+                            {% else %}
+                                <button type="submit" id="care-dept" name="send_to_friend">В отдел заботы</button>
+                                <button type="submit" id="save-changes" name="change_order">Сохранить</button>
+                                {% if chat.payment_type == 'balance' %}
+                                    <button type="submit" id="close-deal" name="top_down_balance">Списать деньги с
+                                        баланса
+                                    </button>
+                                {% endif %}
+                                <button type="submit" id="close-deal" name="close_order">Закрыть сделку</button>
                             {% endif %}
-                            <button type="submit" id="close-deal" name="close_order">Закрыть сделку</button>
                         </div>
                     </div>
                 </form>
@@ -755,10 +786,11 @@
                         <input type="text" id="client-nick" readonly value={{ chat.client.username }}>
 
                         <label for="client-comment">Комментарий по клиенту:</label>
-                        <textarea id="client-comment" placeholder="Оставьте комментарий о клиенте..."></textarea>
+                        <textarea id="client-comment" name="comment"
+                                  placeholder="Оставьте комментарий о клиенте...">{{ chat.client.comment }}</textarea>
 
                         <label for="reason">Причина обращения:</label>
-                        <select id="reason">
+                        <select id="reason" name="type">
                             <option value="buy">Покупка</option>
                             <option value="top_up">Пополнение баланса</option>
                             <option value="not_find_product">Не нашел товар</option>
@@ -773,30 +805,40 @@
                 </form>
             {% endif %}
         {% endif %}
-    </div>
+        </div>
 </main>
 
 <script>
     const messageArea = document.querySelector('.message-area');
-        if (messageArea) {
-            messageArea.scrollTop = messageArea.scrollHeight;
-        }
-        console.log("Скрипт загружен");
+    if (messageArea) {
+        messageArea.scrollTop = messageArea.scrollHeight;
+    }
+    console.log("Скрипт загружен");
+
+    const chatId = {{ chat.id|default:"null" }};
+
     function checkNewMessages() {
-        console.log('Функция checkNewMessages вызвана');
-        fetch('http://127.0.0.1:8000/check_new_messages?chat={{chat.id}}')
-            .then(response => response.json())
-            .then(data => {
-                if (data.newMessages) {
-                    location.reload();
-                }
-            })
-            .catch(error => {
-                console.error('Ошибка при проверке новых сообщений:', error);
-            });
+        if (chatId) { // Проверяем, существует ли chatId
+            console.log('Функция checkNewMessages вызвана');
+            fetch(`check_new_messages?chat=${chatId}`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.newMessages) {
+                        location.reload();
+                    }
+                })
+                .catch(error => {
+                    console.error('Ошибка при проверке новых сообщений:', error);
+                });
+        } else {
+            console.log('chat.id не существует, запрос не отправляется');
+        }
     }
 
-    setInterval(checkNewMessages, 1000);
+    // Устанавливаем интервал только если chatId существует
+    if (chatId) {
+        setInterval(checkNewMessages, 500);
+    }
 
 
     const dropdown = document.getElementById('product-dropdown');
@@ -804,7 +846,6 @@
     const productList = document.getElementById('product-list');
     const productItems = productList.querySelectorAll('li');
 
-    // Открытие дропдауна для продуктов
     searchInput.addEventListener('focus', () => {
         dropdown.classList.add('open');
     });
