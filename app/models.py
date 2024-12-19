@@ -45,7 +45,7 @@ class Products(models.Model):
     name = models.CharField(max_length=128, verbose_name='Имя товара')
     description = models.TextField(blank=True, null=True, verbose_name='Описание товара')
     price = models.DecimalField(blank=True, null=True, max_digits=100, decimal_places=2, verbose_name='Цена товара в рублях')
-    need_enter_price = models.BooleanField(default=False, verbose_name='Требуется ли ввод цены покуки?')
+    need_enter_price = models.BooleanField(default=False, verbose_name='Требуется ли ввод цены покупки?')
     in_bot = models.BooleanField(default=False, verbose_name='Требуется ли размещение в боте?')
 
 
@@ -168,8 +168,9 @@ class ClientActions(models.Model):
 
 
 class ManagerActions(models.Model):
-    client = models.ForeignKey('Manager', related_name='actions', on_delete=models.CASCADE, verbose_name='Менеджер')
+    manager = models.ForeignKey('Manager', related_name='actions', on_delete=models.CASCADE, verbose_name='Менеджер')
     action = models.CharField(max_length=256, verbose_name='Действие')
+    time = models.DateTimeField(auto_now_add=True)
 
 class Mailing(models.Model):
     date = models.DateTimeField(auto_now_add=True)

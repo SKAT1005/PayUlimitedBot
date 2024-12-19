@@ -1,9 +1,13 @@
+import datetime
 import decimal
 
 import buttons
-from app.models import Cripto, Order, Manager, Products, Text
+from app.models import Cripto, Order, Manager, Products, Text, Client, ManagerActions
 from const import bot
 
+
+def log_manager_action(manager, action):
+    ManagerActions.objects.create(manager=manager, action=action)
 
 def get_context_main_menu(request):
     try:
@@ -48,6 +52,11 @@ def get_new_order(manager):
         return order.id
     return None
 
+def send_manager(request):
+    order_id = request.POST.get('order_id')
+    order = Order.objects.get(id=order_id)
+    order.status = 'wait_manager'
+    order.save(update_fields=['status'])
 
 def send_message(request):
     chat_id = request.POST.get('order_id')
@@ -57,9 +66,15 @@ def send_message(request):
         client = order.client
         Text.objects.create(sender='manager', text=text, order=order)
         if client.order_id == str(order.id):
-            bot.send_message(chat_id=order.client.chat_id, text=text)
+            try:
+                bot.send_message(chat_id=order.client.chat_id, text=text)
+            except Exception:
+                pass
         else:
-            bot.send_message(client.chat_id, 'Вам пришел ответ от менеджера', reply_markup=buttons.go_to_chat(order.id))
+            try:
+                bot.send_message(client.chat_id, 'Вам пришел ответ от менеджера', reply_markup=buttons.go_to_chat(order.id))
+            except Exception:
+                pass
 
 
 def change_order(request):
@@ -150,7 +165,10 @@ def close_order(request):
             client = order.client
             client.balance += decimal.Decimal(order.product_price)
             client.save(update_fields=['balance'])
-            bot.send_message(chat_id=client.chat_id, text=f'Ваш баланс успешно пополнен на {order.product_price}$', reply_markup=buttons.go_to_menu())
+            try:
+                bot.send_message(chat_id=client.chat_id, text=f'Ваш баланс успешно пополнен на {order.product_price}$', reply_markup=buttons.go_to_menu())
+            except Exception:
+                pass
 
 
 
@@ -171,33 +189,69 @@ def top_down_balance(request):
 
 def get_context_profile(manager):
     list = {}
-    orders_manager = Order.objects.filter(manager=manager, type__in=['buy', 'not_find_product'], pay_status='complite', status='complite')
-    orders_card_holder = Order.objects.filter(card_holder_id=manager.id, pay_status='complite', status='complite')
-    for order in orders_manager:
-        date = f'{order.time.date()}'
-        if date in list:
-            list[date]['manager'] += round(float(order.total_product_price)*0.1, 2)
-            list[date]['total'] += round(float(order.total_product_price)*0.1, 2)
-        else:
-            list[date] = {'manager': 0, 'total': 0, 'card_holder': 0}
-            list[date]['manager'] = round(float(order.total_product_price)*0.1, 2)
-            list[date]['total'] = round(float(order.total_product_price)*0.1, 2)
+    if not manager.is_staff:
+        orders_manager = Order.objects.filter(manager=manager, type__in=['buy', 'not_find_product'], pay_status='complite', status='complite')
+        orders_card_holder = Order.objects.filter(card_holder_id=manager.id, pay_status='complite', status='complite')
+        for order in orders_manager:
+            date = f'{order.time.date()}'
+            if date in list:
+                list[date]['manager'] += round(float(order.total_product_price)*0.1, 2)
+                list[date]['total'] += round(float(order.total_product_price)*0.1, 2)
+            else:
+                list[date] = {'manager': 0, 'total': 0, 'card_holder': 0}
+                list[date]['manager'] = round(float(order.total_product_price)*0.1, 2)
+                list[date]['total'] = round(float(order.total_product_price)*0.1, 2)
 
-    for order in orders_card_holder:
-        date = f'{order.time.date()}'
-        if date in list:
-            list[date]['card_holder'] += round(float(order.total_product_price)*0.1, 2)
-            list[date]['total'] += round(float(order.total_product_price)*0.1, 2)
-        else:
-            list[date] = {'manager': 0, 'total': 0, 'card_holder': 0}
-            list[date]['card_holder'] += round(float(order.total_product_price)*0.1, 2)
-            list[date]['total'] = round(float(order.total_product_price)*0.1, 2)
-    commission_list = []
-    for i in list:
-        commission_list.append({
-            'date': i,
-            'manager': list[i]['manager'],
-            'card_holder': list[i]['card_holder'],
-            'total': list[i]['total']
-        })
-    return {'commissions': commission_list}
+        for order in orders_card_holder:
+            date = f'{order.time.date()}'
+            if date in list:
+                list[date]['card_holder'] += round(float(order.total_product_price)*0.1, 2)
+                list[date]['total'] += round(float(order.total_product_price)*0.1, 2)
+            else:
+                list[date] = {'manager': 0, 'total': 0, 'card_holder': 0}
+                list[date]['card_holder'] += round(float(order.total_product_price)*0.1, 2)
+                list[date]['total'] = round(float(order.total_product_price)*0.1, 2)
+        commission_list = []
+        for i in list:
+            commission_list.append({
+                'date': i,
+                'manager': list[i]['manager'],
+                'card_holder': list[i]['card_holder'],
+                'total': list[i]['total']
+            })
+        return {'commissions': commission_list}
+    else:
+        return {'managers': Manager.objects.filter(is_friend=False, is_staff=False)}
+
+
+
+def service_mailing(request):
+    if request.POST.get('mail_type') == 'all':
+        text = request.POST.get('text')
+        clients = Client.objects.all()
+    else:
+        date_str = request.POST.get('date')
+        date = datetime.datetime.strptime(date_str, '%Y-%m-%d')
+        product = request.POST.get('product')
+        text = request.POST.get('text')
+        clients_with_purchases_before = Client.objects.filter(
+            orders_for_user__type__in=['buy', 'not_find_product'],
+            orders_for_user__pay_status='complite',
+            orders_for_user__name=product,
+            orders_for_user__time__lte=date
+        )
+
+        # Исключаем из них клиентов, у которых есть заказы типа 'buy' с указанным продуктом после cutoff_datetime
+        clients = clients_with_purchases_before.exclude(
+            orders_for_user__type__in=['buy', 'not_find_product'],
+            orders_for_user__pay_status='complite',
+            orders_for_user__name=product,
+            orders_for_user__time__gt=date
+        ).distinct()
+    for client in clients:
+        try:
+            bot.send_message(chat_id=client.chat_id, text=text)
+        except Exception:
+            pass
+
+

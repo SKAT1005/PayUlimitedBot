@@ -170,6 +170,7 @@ aside li a {
     </div>
     <div class="content">
       <div class="profile-content">
+      {% if not request.user.is_staff %}
         <table>
           <thead>
             <tr>
@@ -190,6 +191,32 @@ aside li a {
           {% endfor %}
           </tbody>
         </table>
+      {% else %}
+      <table>
+          <thead>
+            <tr>
+              <th>Ник менеджера</th>
+              <th>Баланс менеджера</th>
+              <th>Сумма к выплате</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody>
+          {% for manager in managers %}
+              <form method="post">
+              {% csrf_token %}
+                  <input type="hidden" name="manager_id" value={{ manager.id }}>
+            <tr>
+              <td>{{ manager.username }}</td>
+              <td>{{ manager.commission_balance }}$</td>
+              <td><input type="text" name="top_down_balance"></td>
+              <td><button type="submit">Списать баланс</button></td>
+            </tr>
+              </form>
+          {% endfor %}
+          </tbody>
+        </table>
+      {% endif %}
       </div>
     </div>
   </main>

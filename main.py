@@ -40,7 +40,7 @@ def chat(message):
         order.last_message_time = timezone.now()
         order.save(update_fields=['last_message_time'])
         if order.status == 'chat_with_friend':
-            order.status = 'dialog_with_manager'
+            order.status = 'wait_manager'
             order.save(update_fields=['status'])
         if message.content_type == 'text':
             Text.objects.create(order=order, text=message.text, sender='client')

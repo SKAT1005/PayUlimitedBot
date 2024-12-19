@@ -1,16 +1,19 @@
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin
 
-from .models import ReferralLink, Client, Manager, Products, Cripto, Order, Text
+from .models import ReferralLink, Client, Manager, Products, Cripto, Order, Text, ManagerActions
 
-@admin.register(Order)
-class OrderAdmin(admin.ModelAdmin):
-    pass
-
-
-@admin.register(Text)
-class TextAdmin(admin.ModelAdmin):
-    pass
+@admin.register(ManagerActions)
+class ManagerActionsAdmin(admin.ModelAdmin):
+    """
+    Административный интерфейс для модели ManagerActions.
+    """
+    list_display = ('manager', 'action', 'time')  # Поля, отображаемые в списке
+    list_filter = ('manager', 'time')
+    search_fields = ('action', 'manager__username')
+    ordering = ('-time',)
+    date_hierarchy = 'time'
+    list_per_page = 25
 
 @admin.register(ReferralLink)
 class ReferalLinkAdmin(admin.ModelAdmin):
@@ -18,8 +21,9 @@ class ReferalLinkAdmin(admin.ModelAdmin):
 
 
 @admin.register(Client)
-class UsrAdmin(admin.ModelAdmin):
-    pass
+class ClientAdmin(admin.ModelAdmin):
+    list_display = ['id', 'username']
+    search_fields = ('username', 'id')
 
 @admin.register(Manager)
 class ManagerAdmin(UserAdmin):

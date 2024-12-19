@@ -278,11 +278,12 @@
 </aside>
 <main>
     <div class="content">
-        <form class="care-form">
+        <form class="care-form" method="post">
+            {% csrf_token %}
             <h2>Рассылка</h2>
             <div class="radio-group">
                 <label>
-                    <input type="radio" name="mail_type" value="common" checked>
+                    <input type="radio" name="mail_type" value="all" checked>
                     Общая рассылка
                 </label>
                 <label>
@@ -294,25 +295,22 @@
             <div class="selective-fields" id="selectiveFields">
                 <label for="service-search">Выбор сервиса:</label>
                 <div class="custom-dropdown" id="service-dropdown">
-                    <input type="text" id="service-search" placeholder="Начните ввод...">
+                    <input type="text" id="service-search" name="product" placeholder="Начните ввод...">
                     <ul id="service-list">
-                        <li>Сервис A</li>
-                        <li>Сервис B</li>
-                        <li>Сервис C</li>
-                        <li>Сервис X</li>
-                        <li>Сервис Y</li>
-                        <li>Сервис Z</li>
+                        {% for product in products %}
+                        <li>{{ product.name }}</li>
+                        {% endfor %}
                     </ul>
                 </div>
 
                 <label for="no-purchase-date">С какого числа не делалось покупок:</label>
-                <input type="date" id="no-purchase-date">
+                <input type="date" name="date" id="no-purchase-date">
             </div>
 
             <label for="message-text">Текст рассылки:</label>
-            <textarea id="message-text" placeholder="Введите текст для рассылки..."></textarea>
+            <textarea id="message-text" name="text" placeholder="Введите текст для рассылки..."></textarea>
 
-            <button type="button">Отправить</button>
+            <button type="submit">Отправить</button>
         </form>
     </div>
 </main>
