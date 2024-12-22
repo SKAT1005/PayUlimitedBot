@@ -3,6 +3,12 @@ from django.contrib.auth.admin import UserAdmin
 
 from .models import ReferralLink, Client, Manager, Products, Cripto, Order, Text, ManagerActions
 
+
+@admin.register(Order)
+class OrderAdmin(admin.ModelAdmin):
+    list_display = ('client', 'name')
+    list_filter = ('client', 'name', 'type')
+
 @admin.register(ManagerActions)
 class ManagerActionsAdmin(admin.ModelAdmin):
     """

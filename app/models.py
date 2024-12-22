@@ -18,6 +18,8 @@ class Client(models.Model):
     order_id = models.CharField(max_length=8, default=None, blank=True, null=True, verbose_name='Id ордера, по которому ведется диалог')
     need_to_pay = models.DecimalField(default=0, max_digits=100, decimal_places=2, verbose_name='Сумма к оплате')
 
+    def __str__(self):
+        return self.username
 class ReferralLink(models.Model):
     CATEGORY_CHOICES = (
         ('yt', 'Ютуб'),
