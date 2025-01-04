@@ -4,7 +4,7 @@ from const import bot
 
 
 def catalog_list(chat_id, page, param, name=None):
-    text = 'Текст каталога'
+    text = 'Здесь собраны все зарубежные сервисы, которые вы можете оплатить с нашей помощью: видео, музыка, игры, образование, VPN и многое другое. Выбирайте нужный сервис и подключайте подписку без лишних сложностей!'
     markup = buttons.catalog_list(page=page, param=param, name=name)
     bot.send_message(chat_id=chat_id, text=text, reply_markup=markup)
 

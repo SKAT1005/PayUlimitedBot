@@ -93,7 +93,7 @@ def history(page, user):
     menu = InlineKeyboardButton(text='Главное меню', callback_data='menu')
     start = 5 * (int(page) - 1)
     end = 5 * int(page)
-    historys = Order.objects.filter(client=user, status='complite', type='buy')
+    historys = Order.objects.filter(client=user, status='complite', pay_status='complite', type__in=['buy', 'not_find_product'])
     for history in historys[start:end]:
         product_button = InlineKeyboardButton(text=history.name,
                                               callback_data=f'profile|history_detail|{history.id}|{page}')

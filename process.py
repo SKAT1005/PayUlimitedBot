@@ -24,5 +24,8 @@ def usdt_cource():
 def get_balance():
     while True:
         total_balance = Client.objects.aggregate(total=Sum('balance'))['total']
-        BalanceHistory.objects.create(total_balance=total_balance)
+        if total_balance:
+            BalanceHistory.objects.create(total_balance=total_balance)
+        else:
+            BalanceHistory.objects.create(total_balance=0)
         time.sleep(60 * 60 * 24)
