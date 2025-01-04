@@ -1,5 +1,6 @@
 import base64
 import os
+import threading
 
 import django
 from django.db.models import TextField
@@ -7,6 +8,7 @@ from django.utils import timezone
 from django.utils.translation.trans_real import catalog
 
 import payment
+import process
 from const import bot
 from menu import menu
 import catalog
@@ -15,7 +17,7 @@ import profile
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'PayUlimitedBot.settings')
 django.setup()
 
-from app.models import ReferralLink, Client, Order, Text
+from app.models import ReferralLink, Client, Order, Text, Active_users
 
 
 @bot.message_handler(commands=['start'])
@@ -71,6 +73,8 @@ def go_to_chat(chat_id, user, order_id):
 def callback(call):
     chat_id = call.message.chat.id
     user, _ = Client.objects.get_or_create(chat_id=chat_id)
+    active, _ = Active_users.objects.get_or_create(date=timezone.now())
+    active.buy_users_count.add(user)
     if call.message:
         data = call.data.split('|')
         bot.clear_step_handler_by_chat_id(chat_id=chat_id)
@@ -90,4 +94,9 @@ def callback(call):
             catalog.create_order(chat_id, user, 'other')
 
 
-bot.polling(none_stop=True)
+if __name__ == '__main__':
+    polling_thread1 = threading.Thread(target=process.usdt_cource)
+    polling_thread1.start()
+    polling_thread2 = threading.Thread(target=process.get_balance)
+    polling_thread2.start()
+    bot.infinity_polling(timeout=50, long_polling_timeout=25)

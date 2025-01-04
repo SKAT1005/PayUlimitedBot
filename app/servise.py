@@ -1,9 +1,13 @@
 import datetime
 import decimal
 
+import openpyxl
+from django.http import HttpResponse
+
 import buttons
 from app.models import Cripto, Order, Manager, Products, Text, Client, ManagerActions
 from const import bot
+from .state import *
 
 
 def log_manager_action(manager, action):
@@ -90,8 +94,16 @@ def change_order(request):
         order.card_holder_id = card_holder_id
         order.pay_status = pay_status
         if date:
-            order.date = date
-        order.save(update_fields=['card_holder_id', 'pay_status', 'date'])
+            Order.objects.create(
+                name=order.name,
+                product_price=order.product_price,
+                total_product_price=order.total_product_price,
+                payment_type=order.payment_type,
+                pay_status=pay_status,
+                status='chat_with_friend',
+                date=date
+            )
+        order.save(update_fields=['card_holder_id', 'pay_status'])
         client.save(update_fields=['comment'])
     elif order.type == 'top_up':
         comment = request.POST.get('comment')
@@ -125,8 +137,16 @@ def change_order(request):
         order.card_holder_id = card_holder_id
         order.pay_status = pay_status
         if date:
-            order.date = date
-        order.save(update_fields=['name', 'product_price', 'total_product_price', 'payment_type', 'card_holder_id', 'pay_status', 'date'])
+            Order.objects.create(
+                name=name,
+                product_price=product_price,
+                total_product_price=total_product_price,
+                payment_type=payment_type,
+                pay_status=pay_status,
+                status='chat_with_friend',
+                date=date
+            )
+        order.save(update_fields=['name', 'product_price', 'total_product_price', 'payment_type', 'card_holder_id', 'pay_status'])
         client.save(update_fields=['comment'])
     else:
         comment = request.POST.get('comment')
@@ -153,8 +173,24 @@ def close_order(request):
     order.status = 'complite'
     order.save(update_fields=['status'])
     change_order(request)
+    client = order.client
     if order.type in ('buy', 'not_find_product'):
         if order.pay_status == 'complite':
+            for mail in client.mailing.all():
+                if mail.date >= timezone.now()- datetime.timedelta(days=3):
+                    mail.buy_users += 1
+                    mail.buy_summ += order.total_product_price
+                    mail.save(update_fields=['buy_users', 'buy_summ'])
+                client.mailing.remove(mail)
+            if not client.stay_new:
+                client.stay_new = timezone.now()
+                client.save(update_fields=['stay_new'])
+            else:
+                if not client.stay_old:
+                    client.stay_old = timezone.now()
+                    client.save(update_fields=['stay_old'])
+            active, _ = Active_users.objects.get_or_create(date=timezone.now())
+            active.buy_users_count.add(client)
             manager.commission_balance += decimal.Decimal(float(order.total_product_price)*0.1)
             manager.save(update_fields=['commission_balance'])
             card_holder = Manager.objects.filter(id=order.card_holder_id).first()
@@ -162,7 +198,6 @@ def close_order(request):
             card_holder.save(update_fields=['commission_balance'])
     elif order.type == 'top_up':
         if order.pay_status == 'complite':
-            client = order.client
             client.balance += decimal.Decimal(order.product_price)
             client.save(update_fields=['balance'])
             try:
@@ -248,10 +283,46 @@ def service_mailing(request):
             orders_for_user__name=product,
             orders_for_user__time__gt=date
         ).distinct()
+    mail = Mailing.objects.create(text=text)
     for client in clients:
         try:
             bot.send_message(chat_id=client.chat_id, text=text)
+            client.mailing.add(mail)
+            mail.send_users += 1
+            mail.save(update_fields=['send_users'])
         except Exception:
             pass
+
+
+def statistics(request):
+    wb = openpyxl.Workbook()
+    heart_map_enabled = request.POST.get('heart_map') == 'on'
+
+    date_fields = [
+        ('startdate1', 'enddate1', revenue_structure),
+        ('startdate2', 'enddate2', statistics_for_each_service),
+        ('startdate3', 'enddate3', deal_stats),
+        ('startdate4', 'enddate4', mailing_stats),
+        ('startdate5', 'enddate5', conversion),
+        ('startdate6', 'enddate6', active_users),
+        ('startdate7', 'enddate7', balance_stat),
+        ('startdate8', 'enddate8', expenses_stats),
+    ]
+
+    if heart_map_enabled:
+        heart_map(wb)
+
+    for start_key, end_key, func in date_fields:
+        start_date = request.POST.get(start_key)
+        end_date = request.POST.get(end_key)
+        if start_date and end_date:
+            try:
+                start_date_dt = datetime.strptime(start_date, '%Y-%m-%d')
+                end_date_dt = datetime.strptime(end_date, '%Y-%m-%d')
+                func(wb, start_date_dt, end_date_dt)
+            except (ValueError, TypeError):
+                continue
+
+    return wb
 
 

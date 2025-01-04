@@ -1,15 +1,17 @@
 import decimal
+from io import BytesIO
 
+import openpyxl
 from django.contrib.auth.decorators import login_required
-from django.http import HttpResponseRedirect, JsonResponse
+from django.http import HttpResponseRedirect, JsonResponse, HttpResponse
 from django.shortcuts import render, redirect
 from django.contrib.auth import authenticate, login
 from django.contrib import messages
 from django.urls import reverse
 from django.views import View
-from .models import Cripto, Manager, Order, Products
 from .servise import get_context_main_menu, get_new_order, send_message, change_order, send_to_friend, close_order, \
-    top_down_balance, get_context_profile, service_mailing, log_manager_action, send_manager
+    top_down_balance, get_context_profile, service_mailing, log_manager_action, send_manager, statistics
+from .state import *
 
 
 def login_view(request):
@@ -126,3 +128,22 @@ class ProfileView(View):
         manager.commission_balance -= top_down_balance
         manager.save(update_fields=['commission_balance'])
         return redirect('profile')
+
+
+
+class StatisticsView(View):
+
+    def get(self, request):
+        return render(request, 'statistics.html',)
+
+    def post(self, request):
+
+        wb = statistics(request)
+        buffer = BytesIO()
+        wb.save(buffer)
+        buffer.seek(0)
+
+        response = HttpResponse(buffer.read(),
+                                content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+        response['Content-Disposition'] = 'attachment; filename="Статистика.xlsx"'
+        return response

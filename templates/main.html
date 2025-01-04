@@ -404,7 +404,7 @@
     <ul>
         <li class="active"><a href="{% url 'main' %}">Главная</a></li>
         <li><a href="{% url 'mailing' %}">Рассылка</a></li>
-        <li><a href="#">Статистика</a></li>
+        <li><a href="{% url 'statistics' %}">Статистика</a></li>
         <li><a href="{% url 'profile' %}">Мой профиль </a></li>
     </ul>
 </aside>
@@ -437,7 +437,7 @@
                     {% for chat in manager_chats %}
                         <li>
                             <a href="{% url 'main' %}?chat={{ chat.id }}">
-                                Чат {{ chat.id }}
+                                Чат {{ chat.id }} {% if chat.date %} {{ chat.date }} {% endif %}
                                 {% if chat.have_new_message %}
                                     <svg class="unread-icon" width="14" height="14" viewBox="0 0 14 14" fill="none"
                                          xmlns="http://www.w3.org/2000/svg">

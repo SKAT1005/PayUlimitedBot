@@ -22,13 +22,12 @@ def continue_payment(chat_id, user, order_id, type, currency=None):
     order.payment_type = type
     order.save(update_fields=['payment_type'])
     attention = ''
-    if currency:
-        cripto = Cripto.objects.get(name=currency)
-        price_in_cripto = round(order.total_product_price / cripto.course, cripto.dec)
-        order.total_product_price_str = f'{price_in_cripto} {currency}'
-    if type in ['balance', 'card']:
+    if type == 'card':
         usdt_cource = Cripto.objects.get(name='USDT').course
-        order.total_product_price_str = f'{order.total_product_price*usdt_cource} ₽'
+        price_in_rub = round(order.total_product_price * usdt_cource)
+        order.total_product_price_str = f'{price_in_rub}₽'
+    else:
+        order.total_product_price_str = f'{order.total_product_price}$'
     order.save(update_fields=['total_product_price_str'])
     if Manager.objects.filter(status='online').count() == 0:
         attention = '\n\nВнимание! На данный момент все менеджеры заняты, время ответа может быть больше обычного. С вами свяжется первый освободившийся менеджер.'
@@ -98,7 +97,7 @@ def tup_up_balance(message, chat_id, user, order_id=False, product=False):
         try:
             amount = decimal.Decimal(message.text.replace(',', '.'))
         except Exception:
-            msg = bot.send_message(chat_id=chat_id, text='Введите сумму, на которую хотите пополнить в рублях',
+            msg = bot.send_message(chat_id=chat_id, text='Введите сумму, на которую хотите пополнить в долларах',
                                    reply_markup=buttons.go_to_menu())
             bot.register_next_step_handler(msg, tup_up_balance, chat_id, user)
         else:
@@ -123,20 +122,20 @@ def tup_up_balance(message, chat_id, user, order_id=False, product=False):
 def buy_step_one(chat_id, user, prod_id):
     product = Products.objects.get(id=prod_id)
     if product.need_enter_price:
-        msg = bot.send_message(chat_id=chat_id, text='Введите сумму, на которую хотите пополнить в рублях',
+        msg = bot.send_message(chat_id=chat_id, text='Введите сумму, на которую хотите пополнить в долларах',
                                reply_markup=buttons.go_to_menu())
         bot.register_next_step_handler(msg, tup_up_balance, chat_id, user, False, product)
     else:
         amount = product.price
         order = create_order(user=user, amount=amount, total_amount=amount, product=product)
-        text = f'У вас к оплате {amount}м$. Выберите способ оплаты'
+        text = f'У вас к оплате {amount}$. Выберите способ оплаты'
         bot.send_message(chat_id=chat_id, text=text,
                          reply_markup=buttons.payment_method(order_id=order.id, need_enter_new_amount=False))
 
 
 def change_payment_method(chat_id, order_id):
     order = Order.objects.get(id=order_id)
-    text = f'У вас к оплате {order.total_product_price}₽. Выберите новый способ оплаты'
+    text = f'У вас к оплате {order.total_product_price}$. Выберите новый способ оплаты'
     if order.type == 'tup_up':
         bot.send_message(chat_id=chat_id, text=text,
                          reply_markup=buttons.payment_method(order_id=order.id,
@@ -164,11 +163,11 @@ def callback(data, user, chat_id):
     if data[0] == 'buy':
         buy_step_one(chat_id=chat_id, prod_id=data[1], user=user)
     elif data[0] == 'top_up':
-        msg = bot.send_message(chat_id=chat_id, text='Введите сумму, на которую хотите пополнить в рублях',
+        msg = bot.send_message(chat_id=chat_id, text='Введите сумму, на которую хотите пополнить в долларах',
                                reply_markup=buttons.go_to_menu())
         bot.register_next_step_handler(msg, tup_up_balance, chat_id, user)
     elif data[0] == 'enter_new_amount':
-        msg = bot.send_message(chat_id=chat_id, text='Введите сумму, на которую хотите пополнить в рублях',
+        msg = bot.send_message(chat_id=chat_id, text='Введите сумму, на которую хотите пополнить в долларах',
                                reply_markup=buttons.go_to_menu())
         bot.register_next_step_handler(msg, tup_up_balance, chat_id, user)
     elif data[0] == 'continue':

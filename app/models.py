@@ -9,7 +9,10 @@ from const import bot
 class Client(models.Model):
     chat_id = models.CharField(max_length=128, verbose_name='ID чата в телеграмме')
     username = models.CharField(max_length=32, unique=True, verbose_name='Ник клиента')
-    join_time = models.DateTimeField(auto_now_add=True, verbose_name='Время присоединения')
+    join_time = models.DateField(auto_now_add=True, verbose_name='Время присоединения')
+    mailing = models.ManyToManyField('Mailing', verbose_name='Рассылки, которые получил пользователь')
+    stay_new = models.DateField(blank=True, null=True, verbose_name='Когда стал новым клиентов')
+    stay_old = models.DateField(blank=True, null=True, verbose_name='Когда стал старым клиентом')
     invite_ref = models.ForeignKey('ReferralLink', blank=True, null=True, on_delete=models.PROTECT, related_name='usr',
                                    verbose_name='Ссылка-приглашения')
     comment = models.TextField(default='', blank=True, null=True, verbose_name='Комментарий по клиенту')
@@ -53,7 +56,7 @@ class Products(models.Model):
 
 class Cripto(models.Model):
     name = models.CharField(max_length=8, verbose_name='Название криптовалюты')
-    course = models.DecimalField(max_digits=100, decimal_places=2, verbose_name='Курс криптовалюты')
+    course = models.DecimalField(default=100, max_digits=100, decimal_places=2, verbose_name='Курс криптовалюты')
     dec = models.IntegerField(default=2, verbose_name='Кол-во знаков после запятой')
 
 
@@ -129,7 +132,7 @@ class Order(models.Model):
     payment_type = models.CharField(max_length=32, blank=True, null=True, choices=PAYMENT_TYPE_CHOICES, verbose_name='Способ оплаты')
     type = models.CharField(max_length=20, choices=TYPE_CHOICES, default='buy', verbose_name='Тип обращения')
     date = models.DateField(blank=True, null=True, verbose_name='Дата для связи с клиентов')
-    time = models.DateTimeField(auto_now_add=True, verbose_name='Время заказа')
+    time = models.DateField(auto_now_add=True, verbose_name='Время заказа')
     have_new_message = models.BooleanField(default=False, verbose_name='Есть ли новое сообщение?')
     last_message_time = models.DateTimeField(blank=True, null=True, verbose_name='Время последнего сообщения')
 
@@ -175,7 +178,8 @@ class ManagerActions(models.Model):
     time = models.DateTimeField(auto_now_add=True)
 
 class Mailing(models.Model):
-    date = models.DateTimeField(auto_now_add=True)
+    date = models.DateField(auto_now_add=True)
+    text = models.TextField(verbose_name='Текст рассылки')
     send_users = models.IntegerField(default=0, verbose_name='Какому кол-ву произошла отправка')
     buy_users = models.IntegerField(default=0, verbose_name='Сколько пользователей в течении 72 совершили хотя бы 1 покупку')
     buy_summ = models.DecimalField(max_digits=10, blank=True, null=True, decimal_places=2, verbose_name='Сумма покупок с учетом доли ДК, МОПА и реферальной доли')
@@ -184,3 +188,9 @@ class Mailing(models.Model):
 class BalanceHistory(models.Model):
     total_balance = models.DecimalField(max_digits=10, decimal_places=2, verbose_name='Сумма балансов пользователей')
     date = models.DateField(auto_now_add=True)
+
+
+class Active_users(models.Model):
+    buy_users_count = models.ManyToManyField('Client', blank=True, verbose_name='Кол-во пользователей, которые купили что-либо', related_name='bought_active_users')
+    user_action_count = models.ManyToManyField('Client', blank=True, verbose_name='Кол-во пользователей, которые совершили хотя бы одно действие', related_name='action_active_users')
+    date = models.DateField()
