@@ -1,7 +1,7 @@
 import re
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, date
 
-from django.db.models import Sum, ExpressionWrapper, F, FloatField, Count
+from django.db.models import Sum, ExpressionWrapper, F, FloatField, Count, IntegerField
 from django.db.models.functions import Coalesce
 from django.utils import timezone
 from openpyxl import Workbook
@@ -118,12 +118,12 @@ def revenue_structure_data(startdate, enddate):
 
     # 2. Вычисляем общую выручку как сумму (total_product_price - product_price) для всех заказов
     #    Используем ExpressionWrapper для создания выражения разницы
-    total_revenue = Order.objects.aggregate(
+    total_revenue = total_purchases.aggregate(
         total_revenue=Coalesce(
             Sum(
                 ExpressionWrapper(
                     F('total_product_price') - F('product_price'),
-                    output_field=FloatField
+                    output_field=IntegerField()
                 )
             ),
             0
@@ -137,7 +137,7 @@ def revenue_structure_data(startdate, enddate):
             Sum(
                 ExpressionWrapper(
                     F('total_product_price') - F('product_price'),
-                    output_field=FloatField()
+                    output_field=IntegerField()
                 )
             ),
             0
@@ -152,7 +152,7 @@ def revenue_structure_data(startdate, enddate):
         revenue = service['revenue']
 
         # Вычисляем проценты, избегая деления на ноль
-        percentage_purchases = (purchases / total_purchases * 100) if total_purchases > 0 else 0
+        percentage_purchases = (purchases / total_purchases.count() * 100) if total_purchases.count() > 0 else 0
         percentage_revenue = (revenue / total_revenue * 100) if total_revenue > 0 else 0
 
         # Округляем проценты до двух знаков после запятой для наглядности
@@ -180,8 +180,8 @@ def revenue_structure(wb, startdate, enddate):
     data_values1 = Reference(ws, min_col=2, min_row=2, max_row=len(data))
     data_values2 = Reference(ws, min_col=3, min_row=2, max_row=len(data))
 
-    pie1.add_data(data_values1, titles_from_data=True)
-    pie2.add_data(data_values2, titles_from_data=True)
+    pie1.add_data(data_values1)
+    pie2.add_data(data_values2)
 
     pie1.set_categories(labels)
     pie2.set_categories(labels)
@@ -206,6 +206,10 @@ def revenue_structure(wb, startdate, enddate):
 
 
 def iterate_days(start_date, end_date):
+    start_date = datetime(year=int(start_date.split('-')[0]), month=int(start_date.split('-')[1]),
+                          day=int(start_date.split('-')[2]))
+    end_date = datetime(year=int(end_date.split('-')[0]), month=int(end_date.split('-')[1]),
+                        day=int(end_date.split('-')[2]))
     delta = end_date - start_date  # Разница между датами
 
     for i in range(delta.days + 1):
@@ -224,14 +228,20 @@ def statistics_for_each_service_data(startdate, enddate):
         prod1 = [product.name]
         prod2 = [product.name]
         for date in dates:
-            orders = Order.objects.filter(name=product.name, time=date, type__in=['buy', 'not_find_product'],
+            orders = Order.objects.filter(name=product.name, time=date.strftime("%Y-%m-%d"),
+                                          type__in=['buy', 'not_find_product'],
                                           pay_status='complite')
-            total_purchases = orders.count()
-            total_revenue = orders.aggregate(Sum(F('total_product_price') - F('product_price')))[
-                'Sum__total_product_price__sub']
+            if orders:
+                total_purchases = orders.count()
+                total_revenue = orders.aggregate(
+                    total_revenue=Sum(F('total_product_price') - F('product_price'))
+                )['total_revenue']
 
-            prod1.append(total_purchases)
-            prod2.append(total_revenue or 0)
+                prod1.append(total_purchases)
+                prod2.append(total_revenue or 0)
+            else:
+                prod1.append(0)
+                prod2.append(0)
         data1.append(prod1)
         data2.append(prod2)
     return data1, data2
@@ -276,23 +286,31 @@ def statistics_for_each_service(wb, startdate, enddate):
     ws.add_chart(chart1, "I1")
     ws.add_chart(chart2, "I16")
 
+
 def deal_stats_date(startdate, enddate):
     dates = [i for i in iterate_days(startdate, enddate)]
     data_1_new = [[], [], []]
     data_2_new = [[], [], []]
     for date in dates:
-        orders = Order.objects.filter(time=date, type__in=['buy', 'not_find_product'],
-                                          pay_status='complite')
+        orders = Order.objects.filter(time=date.strftime("%Y-%m-%d"), type__in=['buy', 'not_find_product'],
+                                      pay_status='complite')
         total_purchases = orders.count()
         total_purchases_new_user = orders.filter(is_first_buy=True).count()
         total_purchases_old_user = orders.filter(is_first_buy=False).count()
 
-        total_revenue = orders.aggregate(Sum(F('total_product_price') - F('product_price')))[
-            'Sum__total_product_price__sub']
-        total_revenue_new_user = orders.filter(is_first_buy=True).aggregate(Sum(F('total_product_price') - F('product_price')))[
-            'Sum__total_product_price__sub']
-        total_revenue_old_user = orders.filter(is_first_buy=False).aggregate(Sum(F('total_product_price') - F('product_price')))[
-            'Sum__total_product_price__sub']
+        total_revenue = orders.aggregate(
+            total_revenue=Sum(F('total_product_price') - F('product_price'))
+        )['total_revenue']
+        total_revenue_new_user = \
+            orders.filter(is_first_buy=True).aggregate(
+                Sum__total_product_price__sub=Sum(F('total_product_price') - F('product_price'))
+            )[
+                'Sum__total_product_price__sub']
+        total_revenue_old_user = \
+            orders.filter(is_first_buy=False).aggregate(
+                Sum__total_product_price__sub=Sum(F('total_product_price') - F('product_price'))
+            )[
+                'Sum__total_product_price__sub']
 
         data_1_new[0].append(total_purchases)
         data_1_new[1].append(total_purchases_new_user)
@@ -303,6 +321,7 @@ def deal_stats_date(startdate, enddate):
         data_1_new[2].append(total_revenue_old_user)
 
     return dates, data_1_new, data_2_new
+
 
 def deal_stats(wb, startdate, enddate):
     ws = wb.create_sheet("Статистика по сделкам")
@@ -363,33 +382,46 @@ def mailing_stats_data(startdate, enddate):
         data.append([mail.date, mail.text, mail.send_users, mail.buy_users, mail.buy_users])
     return data
 
+
 def mailing_stats(wb, startdate, enddate):
     ws = wb.create_sheet("Статистика рассылки")
     data = [
-        ["Дата рассылки", "Текст рассылки", "Кол-во получивших", "Купили за 3 дня", "Сумма покупок"]
-    ] + mailing_stats_data(startdate, enddate)
+               ["Дата рассылки", "Текст рассылки", "Кол-во получивших", "Купили за 3 дня", "Сумма покупок"]
+           ] + mailing_stats_data(startdate, enddate)
     for row in data:
         ws.append(row)
 
 
 def conversion_data(startdate, enddate):
+    startdate = date(year=int(startdate.split('-')[0]), month=int(startdate.split('-')[1]),
+                          day=int(startdate.split('-')[2]))
+    enddate = date(year=int(enddate.split('-')[0]), month=int(enddate.split('-')[1]),
+                        day=int(enddate.split('-')[2]))
     first = [0, 0, 0]
     second = [0, 0, 0]
     for user in Client.objects.filter(join_time__range=[startdate, enddate]):
-        if startdate <= user.stay_new <= enddate:
+        if user.stay_new and startdate <= user.stay_new <= enddate:
             first[0] += 1
-            if startdate <= user.stay_old <= enddate:
+            if user.stay_old and startdate <= user.stay_old <= enddate:
                 first[1] += 1
         elif startdate <= user.join_time <= enddate:
             second[0] += 1
-            if startdate <= user.stay_new <= enddate:
+            if user.stay_new and startdate <= user.stay_new <= enddate:
                 second[1] += 1
-    first_persent = int(first[1]/first[0])*100
-    second_persent = int(second[1]/second[0])*100
+    try:
+        first_persent = int(first[1] / first[0] * 100)
+    except Exception:
+        first_persent = 0
+    try:
+        second_persent = int(second[1] / second[0] * 100)
+    except Exception:
+        second_persent = 0
     first[2] = f'{first_persent}%'
     second[2] = f'{second_persent}%'
 
     return first, second
+
+
 def conversion(wb, startdate, enddate):
     ws = wb.create_sheet("Конверсия")
     first, second = conversion_data(startdate, enddate)
@@ -412,6 +444,8 @@ def active_users_data(startdate, enddate):
         first.append(active.buy_users_count.count())
         second.append(active.user_action_count.count())
     return dates, first, second
+
+
 def active_users(wb, startdate, enddate):
     ws = wb.create_sheet("Активные пользователи")
     dates, first, second = active_users_data(startdate, enddate)
@@ -437,12 +471,15 @@ def active_users(wb, startdate, enddate):
     chart.y_axis.delete = False
 
     ws.add_chart(chart, "A5")
+
+
 def balance_stat_data(startdate, enddate):
     dates = [i for i in iterate_days(startdate, enddate)]
     balance_summ = []
     for balance in BalanceHistory.objects.filter(date__range=[startdate, enddate]):
         balance_summ.append(balance.total_balance)
     return dates, balance_summ
+
 
 def balance_stat(wb, startdate, enddate):
     ws = wb.create_sheet("Статистика балансов")

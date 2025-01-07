@@ -1,13 +1,29 @@
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin
 
-from .models import ReferralLink, Client, Manager, Products, Cripto, Order, Text, ManagerActions
+from .models import ReferralLink, Client, Manager, Products, Cripto, Order, BalanceHistory, ManagerActions, Active_users, Mailing
+
+
+
+@admin.register(Mailing)
+class MailingAdmin(admin.ModelAdmin):
+    pass
+
+@admin.register(BalanceHistory)
+class BalanceHistoryAdmin(admin.ModelAdmin):
+    pass
+
+
+@admin.register(Active_users)
+class Active_usersAdmin(admin.ModelAdmin):
+    pass
 
 
 @admin.register(Order)
 class OrderAdmin(admin.ModelAdmin):
-    list_display = ('client', 'name')
+    list_display = ('client', 'name', 'time')
     list_filter = ('client', 'name', 'type')
+
 
 @admin.register(ManagerActions)
 class ManagerActionsAdmin(admin.ModelAdmin):
@@ -21,6 +37,7 @@ class ManagerActionsAdmin(admin.ModelAdmin):
     date_hierarchy = 'time'
     list_per_page = 25
 
+
 @admin.register(ReferralLink)
 class ReferalLinkAdmin(admin.ModelAdmin):
     fields = ('owner', 'name', 'type', 'last_invite_buyer_user_time')
@@ -30,6 +47,7 @@ class ReferalLinkAdmin(admin.ModelAdmin):
 class ClientAdmin(admin.ModelAdmin):
     list_display = ['id', 'username']
     search_fields = ('username', 'id')
+
 
 @admin.register(Manager)
 class ManagerAdmin(UserAdmin):

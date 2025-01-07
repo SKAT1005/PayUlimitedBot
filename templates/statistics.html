@@ -153,7 +153,6 @@
         .date-range {
             margin-top: 10px;
             padding-left: 25px; /* чтобы визуально сдвинуть поле под чекбокс */
-            display: none; /* по умолчанию скрыта */
         }
 
         .date-range label {
@@ -231,6 +230,12 @@
             <div class="statistics-container">
                 <h2>Выберите пункты для формирования отчёта:</h2>
 
+                <div class="date-range" id="date-range">
+                <label>Период:</label>
+                <input type="date" name="startdate">
+                <input type="date" name="enddate">
+            </div>
+
                 <!-- 1 -->
                 <div class="stat-item">
                     <label>
@@ -242,105 +247,65 @@
                 <!-- 2 -->
                 <div class="stat-item">
                     <label>
-                        <input type="checkbox" class="toggle-date" data-target="date-range-2">
+                        <input type="checkbox" class="toggle-date" name="revenue_structure">
                         2 - Структура выручки
                     </label>
-                    <div class="date-range" id="date-range-2">
-                        <label>Период:</label>
-                        <input type="date" name="startdate1">
-                        <input type="date" name="enddate1">
-                    </div>
                 </div>
 
                 <!-- 3 -->
                 <div class="stat-item">
                     <label>
-                        <input type="checkbox" class="toggle-date" data-target="date-range-3">
+                        <input type="checkbox" class="toggle-date" name="statistics_for_each_service">
                         3 - Статистика по каждому сервису
                     </label>
-                    <div class="date-range" id="date-range-3">
-                        <label>Период:</label>
-                        <input type="date" name="startdate2">
-                        <input type="date" name="enddate2">
-                    </div>
                 </div>
 
                 <!-- 4 -->
                 <div class="stat-item">
                     <label>
-                        <input type="checkbox" class="toggle-date" data-target="date-range-4">
+                        <input type="checkbox" class="toggle-date" name="deal_stats">
                         4 - Статистика по сделкам
                     </label>
-                    <div class="date-range" id="date-range-4">
-                        <label>Период:</label>
-                        <input type="date" name="startdate3">
-                        <input type="date" name="enddate3">
-                    </div>
                 </div>
 
                 <!-- 5 -->
                 <div class="stat-item">
                     <label>
-                        <input type="checkbox" class="toggle-date" data-target="date-range-5">
+                        <input type="checkbox" class="toggle-date" name="mailing_stats">
                         5 - Статистика рассылки
                     </label>
-                    <div class="date-range" id="date-range-5">
-                        <label>Период:</label>
-                        <input type="date" name="startdate4">
-                        <input type="date" name="enddate4">
-                    </div>
                 </div>
 
                 <!-- 6 -->
                 <div class="stat-item">
                     <label>
-                        <input type="checkbox" class="toggle-date" data-target="date-range-6">
+                        <input type="checkbox" class="toggle-date" name="conversion">
                         6 - Конверсия
                     </label>
-                    <div class="date-range" id="date-range-6">
-                        <label>Период:</label>
-                        <input type="date" name="startdate5">
-                        <input type="date" name="enddate5">
-                    </div>
                 </div>
 
                 <!-- 7 -->
                 <div class="stat-item">
                     <label>
-                        <input type="checkbox" class="toggle-date" data-target="date-range-7">
+                        <input type="checkbox" class="toggle-date" name="active_users">
                         7 - Количество активных пользователей
                     </label>
-                    <div class="date-range" id="date-range-7">
-                        <label>Период:</label>
-                        <input type="date" name="startdate6">
-                        <input type="date" name="enddate6">
-                    </div>
                 </div>
 
                 <!-- 8 -->
                 <div class="stat-item">
                     <label>
-                        <input type="checkbox" class="toggle-date" data-target="date-range-8">
+                        <input type="checkbox" class="toggle-date" name="balance_stat">
                         8 - Статистика балансов
                     </label>
-                    <div class="date-range" id="date-range-8">
-                        <label>Период:</label>
-                        <input type="date" name="startdate7">
-                        <input type="date" name="enddate7">
-                    </div>
                 </div>
 
                 <!-- 9 -->
                 <div class="stat-item">
                     <label>
-                        <input type="checkbox" class="toggle-date" data-target="date-range-9">
+                        <input type="checkbox" class="toggle-date" name="expenses_stats">
                         9 - Статистика расходов
                     </label>
-                    <div class="date-range" id="date-range-9">
-                        <label>Период:</label>
-                        <input type="date" name="startdate8">
-                        <input type="date" name="enddate8">
-                    </div>
                 </div>
 
                 <!-- Кнопка для формирования Excel-файла -->
@@ -348,24 +313,6 @@
             </div>
         </form>
 </main>
-
-<script>
-    // Находим все чекбоксы, которые должны показывать/скрывать выбор дат
-    const checkboxes = document.querySelectorAll('.toggle-date');
-
-    checkboxes.forEach((checkbox) => {
-        checkbox.addEventListener('change', function () {
-            const targetId = this.dataset.target;
-            const dateRange = document.getElementById(targetId);
-
-            if (this.checked) {
-                dateRange.style.display = 'block';
-            } else {
-                dateRange.style.display = 'none';
-            }
-        });
-    });
-</script>
 
 </body>
 </html>

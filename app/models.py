@@ -10,7 +10,7 @@ class Client(models.Model):
     chat_id = models.CharField(max_length=128, verbose_name='ID чата в телеграмме')
     username = models.CharField(max_length=32, unique=True, verbose_name='Ник клиента')
     join_time = models.DateField(auto_now_add=True, verbose_name='Время присоединения')
-    mailing = models.ManyToManyField('Mailing', verbose_name='Рассылки, которые получил пользователь')
+    mailing = models.ManyToManyField('Mailing', blank=True, verbose_name='Рассылки, которые получил пользователь')
     stay_new = models.DateField(blank=True, null=True, verbose_name='Когда стал новым клиентов')
     stay_old = models.DateField(blank=True, null=True, verbose_name='Когда стал старым клиентом')
     invite_ref = models.ForeignKey('ReferralLink', blank=True, null=True, on_delete=models.PROTECT, related_name='usr',
@@ -132,7 +132,7 @@ class Order(models.Model):
     payment_type = models.CharField(max_length=32, blank=True, null=True, choices=PAYMENT_TYPE_CHOICES, verbose_name='Способ оплаты')
     type = models.CharField(max_length=20, choices=TYPE_CHOICES, default='buy', verbose_name='Тип обращения')
     date = models.DateField(blank=True, null=True, verbose_name='Дата для связи с клиентов')
-    time = models.DateField(auto_now_add=True, verbose_name='Время заказа')
+    time = models.DateField(verbose_name='Время заказа')
     have_new_message = models.BooleanField(default=False, verbose_name='Есть ли новое сообщение?')
     last_message_time = models.DateTimeField(blank=True, null=True, verbose_name='Время последнего сообщения')
 
@@ -187,7 +187,7 @@ class Mailing(models.Model):
 
 class BalanceHistory(models.Model):
     total_balance = models.DecimalField(max_digits=10, decimal_places=2, verbose_name='Сумма балансов пользователей')
-    date = models.DateField(auto_now_add=True)
+    date = models.DateField()
 
 
 class Active_users(models.Model):

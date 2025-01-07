@@ -13,16 +13,17 @@ from .state import *
 def log_manager_action(manager, action):
     ManagerActions.objects.create(manager=manager, action=action)
 
+
 def get_context_main_menu(request):
     try:
-        chat = Order.objects.filter(id = request.GET.get('chat')).first()
+        chat = Order.objects.filter(id=request.GET.get('chat')).first()
         chat.have_new_message = False
         chat.save(update_fields=['have_new_message'])
         client = chat.client
         order_history = Order.objects.filter(client=client, type__in=['buy', 'not_find_product'], status='complite',
                                              pay_status='complite')
         n = len(order_history)
-        n = max(n-5, 0)
+        n = max(n - 5, 0)
         order_history = order_history[n:]
     except Exception as e:
         chat = None
@@ -34,7 +35,8 @@ def get_context_main_menu(request):
     if request.user.is_friend:
         manager_chats = Order.objects.filter(status='chat_with_friend')
     else:
-        manager_chats = request.user.orders_for_manager.filter(status='dialog_with_manager').order_by('-last_message_time')
+        manager_chats = request.user.orders_for_manager.filter(status='dialog_with_manager').order_by(
+            '-last_message_time')
     context = {
         'manager_chats': manager_chats,
         'usdt_course': usdt_course,
@@ -56,11 +58,13 @@ def get_new_order(manager):
         return order.id
     return None
 
+
 def send_manager(request):
     order_id = request.POST.get('order_id')
     order = Order.objects.get(id=order_id)
     order.status = 'wait_manager'
     order.save(update_fields=['status'])
+
 
 def send_message(request):
     chat_id = request.POST.get('order_id')
@@ -76,7 +80,8 @@ def send_message(request):
                 pass
         else:
             try:
-                bot.send_message(client.chat_id, 'Вам пришел ответ от менеджера', reply_markup=buttons.go_to_chat(order.id))
+                bot.send_message(client.chat_id, 'Вам пришел ответ от менеджера',
+                                 reply_markup=buttons.go_to_chat(order.id))
             except Exception:
                 pass
 
@@ -146,7 +151,8 @@ def change_order(request):
                 status='chat_with_friend',
                 date=date
             )
-        order.save(update_fields=['name', 'product_price', 'total_product_price', 'payment_type', 'card_holder_id', 'pay_status'])
+        order.save(update_fields=['name', 'product_price', 'total_product_price', 'payment_type', 'card_holder_id',
+                                  'pay_status'])
         client.save(update_fields=['comment'])
     else:
         comment = request.POST.get('comment')
@@ -155,7 +161,6 @@ def change_order(request):
         order.type = type
         order.save(update_fields=['type'])
         client.save(update_fields=['comment'])
-
 
 
 def send_to_friend(request):
@@ -177,7 +182,7 @@ def close_order(request):
     if order.type in ('buy', 'not_find_product'):
         if order.pay_status == 'complite':
             for mail in client.mailing.all():
-                if mail.date >= timezone.now()- datetime.timedelta(days=3):
+                if mail.date >= timezone.now() - datetime.timedelta(days=3):
                     mail.buy_users += 1
                     mail.buy_summ += order.total_product_price
                     mail.save(update_fields=['buy_users', 'buy_summ'])
@@ -191,21 +196,20 @@ def close_order(request):
                     client.save(update_fields=['stay_old'])
             active, _ = Active_users.objects.get_or_create(date=timezone.now())
             active.buy_users_count.add(client)
-            manager.commission_balance += decimal.Decimal(float(order.total_product_price)*0.1)
+            manager.commission_balance += decimal.Decimal(float(order.total_product_price) * 0.1)
             manager.save(update_fields=['commission_balance'])
             card_holder = Manager.objects.filter(id=order.card_holder_id).first()
-            card_holder.commission_balance += decimal.Decimal(float(order.total_product_price)*0.1)
+            card_holder.commission_balance += decimal.Decimal(float(order.total_product_price) * 0.1)
             card_holder.save(update_fields=['commission_balance'])
     elif order.type == 'top_up':
         if order.pay_status == 'complite':
             client.balance += decimal.Decimal(order.product_price)
             client.save(update_fields=['balance'])
             try:
-                bot.send_message(chat_id=client.chat_id, text=f'Ваш баланс успешно пополнен на {order.product_price}$', reply_markup=buttons.go_to_menu())
+                bot.send_message(chat_id=client.chat_id, text=f'Ваш баланс успешно пополнен на {order.product_price}$',
+                                 reply_markup=buttons.go_to_menu())
             except Exception:
                 pass
-
-
 
 
 def top_down_balance(request):
@@ -225,27 +229,28 @@ def top_down_balance(request):
 def get_context_profile(manager):
     list = {}
     if not manager.is_staff:
-        orders_manager = Order.objects.filter(manager=manager, type__in=['buy', 'not_find_product'], pay_status='complite', status='complite')
+        orders_manager = Order.objects.filter(manager=manager, type__in=['buy', 'not_find_product'],
+                                              pay_status='complite', status='complite')
         orders_card_holder = Order.objects.filter(card_holder_id=manager.id, pay_status='complite', status='complite')
         for order in orders_manager:
             date = f'{order.time.date()}'
             if date in list:
-                list[date]['manager'] += round(float(order.total_product_price)*0.1, 2)
-                list[date]['total'] += round(float(order.total_product_price)*0.1, 2)
+                list[date]['manager'] += round(float(order.total_product_price) * 0.1, 2)
+                list[date]['total'] += round(float(order.total_product_price) * 0.1, 2)
             else:
                 list[date] = {'manager': 0, 'total': 0, 'card_holder': 0}
-                list[date]['manager'] = round(float(order.total_product_price)*0.1, 2)
-                list[date]['total'] = round(float(order.total_product_price)*0.1, 2)
+                list[date]['manager'] = round(float(order.total_product_price) * 0.1, 2)
+                list[date]['total'] = round(float(order.total_product_price) * 0.1, 2)
 
         for order in orders_card_holder:
             date = f'{order.time.date()}'
             if date in list:
-                list[date]['card_holder'] += round(float(order.total_product_price)*0.1, 2)
-                list[date]['total'] += round(float(order.total_product_price)*0.1, 2)
+                list[date]['card_holder'] += round(float(order.total_product_price) * 0.1, 2)
+                list[date]['total'] += round(float(order.total_product_price) * 0.1, 2)
             else:
                 list[date] = {'manager': 0, 'total': 0, 'card_holder': 0}
-                list[date]['card_holder'] += round(float(order.total_product_price)*0.1, 2)
-                list[date]['total'] = round(float(order.total_product_price)*0.1, 2)
+                list[date]['card_holder'] += round(float(order.total_product_price) * 0.1, 2)
+                list[date]['total'] = round(float(order.total_product_price) * 0.1, 2)
         commission_list = []
         for i in list:
             commission_list.append({
@@ -257,7 +262,6 @@ def get_context_profile(manager):
         return {'commissions': commission_list}
     else:
         return {'managers': Manager.objects.filter(is_friend=False, is_staff=False)}
-
 
 
 def service_mailing(request):
@@ -296,33 +300,27 @@ def service_mailing(request):
 
 def statistics(request):
     wb = openpyxl.Workbook()
-    heart_map_enabled = request.POST.get('heart_map') == 'on'
 
-    date_fields = [
-        ('startdate1', 'enddate1', revenue_structure),
-        ('startdate2', 'enddate2', statistics_for_each_service),
-        ('startdate3', 'enddate3', deal_stats),
-        ('startdate4', 'enddate4', mailing_stats),
-        ('startdate5', 'enddate5', conversion),
-        ('startdate6', 'enddate6', active_users),
-        ('startdate7', 'enddate7', balance_stat),
-        ('startdate8', 'enddate8', expenses_stats),
-    ]
+    startdate = request.POST.get('startdate')
+    enddate = request.POST.get('enddate')
 
-    if heart_map_enabled:
+    if request.POST.get('heart_map') == 'on':
         heart_map(wb)
-
-    for start_key, end_key, func in date_fields:
-        start_date = request.POST.get(start_key)
-        end_date = request.POST.get(end_key)
-        if start_date and end_date:
-            try:
-                start_date_dt = datetime.strptime(start_date, '%Y-%m-%d')
-                end_date_dt = datetime.strptime(end_date, '%Y-%m-%d')
-                func(wb, start_date_dt, end_date_dt)
-            except (ValueError, TypeError):
-                continue
+    if request.POST.get('revenue_structure') == 'on':
+        revenue_structure(wb, startdate, enddate)
+    if request.POST.get('statistics_for_each_service') == 'on':
+        statistics_for_each_service(wb, startdate, enddate)
+    if request.POST.get('deal_stats') == 'on':
+        deal_stats(wb, startdate, enddate)
+    if request.POST.get('mailing_stats') == 'on':
+        mailing_stats(wb, startdate, enddate)
+    if request.POST.get('conversion') == 'on':
+        conversion(wb, startdate, enddate)
+    if request.POST.get('active_users') == 'on':
+        active_users(wb, startdate, enddate)
+    if request.POST.get('balance_stat') == 'on':
+        balance_stat(wb, startdate, enddate)
+    if request.POST.get('expenses_stats') == 'on':
+        expenses_stats(wb, startdate, enddate)
 
     return wb
-
-

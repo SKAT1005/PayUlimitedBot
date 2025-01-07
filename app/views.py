@@ -1,4 +1,5 @@
 import decimal
+import urllib.parse
 from io import BytesIO
 
 import openpyxl
@@ -137,13 +138,18 @@ class StatisticsView(View):
         return render(request, 'statistics.html',)
 
     def post(self, request):
-
         wb = statistics(request)
         buffer = BytesIO()
         wb.save(buffer)
         buffer.seek(0)
-
-        response = HttpResponse(buffer.read(),
+        file_data = buffer.read()
+        response = HttpResponse(file_data,
                                 content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
-        response['Content-Disposition'] = 'attachment; filename="Статистика.xlsx"'
+        date = timezone.now()
+        filename = f"Statistics {date.day}-{date.month}-{date.year}.xlsx"
+        encoded_filename = urllib.parse.quote(filename)
+
+        response['Content-Disposition'] = f'attachment; filename="{filename}"; filename*=UTF-8\'\'{encoded_filename}'
+
+        response['Content-Length'] = buffer.getbuffer().nbytes
         return response
