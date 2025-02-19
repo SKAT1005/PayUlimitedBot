@@ -204,6 +204,51 @@
         ::-webkit-scrollbar-thumb:hover {
             background: #999;
         }
+
+
+.top-bar {
+            background: #fff;
+            padding: 10px 20px;
+            border-bottom: 1px solid #e2e8f0;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            box-sizing: border-box;
+        }
+
+        .top-bar-left, .top-bar-right {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+                .button {
+            /* Сбрасываем дефолтные стили */
+            border: none;
+            outline: none;
+            display: inline-block;
+            text-align: center;
+            text-decoration: none;
+            cursor: pointer;
+            font-size: 16px;
+            /* Можно также использовать любые встроенные и кастомные шрифты, например, отсюда  */
+            font-family: Roboto, Verdana, Tahoma, sans;
+            /* Тут можно поэкспериментировать */
+            padding: 12px 16px;
+            border-radius: 100px;
+            color: #fff;
+        }
+
+        .button i {
+            margin-right: 4px;
+        }
+
+        .button + .button {
+            margin-left: 6px;
+        }
+
+        .button.green {
+            background: #1abc9c;
+        }
     </style>
 </head>
 <body>
@@ -212,16 +257,30 @@
 <aside>
     <h1>Моя Админка</h1>
     <ul>
-        <li><a href="#">Главная</a></li>
-        <li><a href="#">Рассылка</a></li>
-        <li class="active"><a href="#">Статистика</a></li>
-        <li><a href="#">Мой профиль</a></li>
+        <li class="active"><a href="{% url 'main' %}">Главная</a></li>
+        <li><a href="{% url 'mailing' %}">Рассылка</a></li>
+        <li><a href="{% url 'statistics' %}">Статистика</a></li>
+        <li><a href="{% url 'profile' %}">Мой профиль </a></li>
     </ul>
 </aside>
 
 <!-- Основной блок страницы -->
 <main>
+<div class="top-bar">
+    <div class="top-bar-left">
+        <div class="status-select">
+        </div>
+      </div>
+        <div class="top-bar-right">
+        <form method="post", action="{% url 'logout' %}">
+            {% csrf_token %}
+            <button type="submit" id="logout" class="button green">
+                <img height="20px" width="auto" src="https://img.icons8.com/?size=100&id=2445&format=png&color=000000"></img>
+            </button>
+            </form>
+        </div>
 
+    </div>
     <!-- Основная область контента -->
     <div class="content">
 
@@ -305,6 +364,18 @@
                     <label>
                         <input type="checkbox" class="toggle-date" name="expenses_stats">
                         9 - Статистика расходов
+                    </label>
+                </div>
+                <div class="stat-item">
+                    <label>
+                        <input type="checkbox" class="toggle-date" name="link_stats">
+                        10 - Статистика ссылок
+                    </label>
+                </div>
+                <div class="stat-item">
+                    <label>
+                        <input type="checkbox" class="toggle-date" name="traffic_state">
+                        11 - Источники трафика
                     </label>
                 </div>
 

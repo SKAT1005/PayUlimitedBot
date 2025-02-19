@@ -2,8 +2,8 @@ import decimal
 import urllib.parse
 from io import BytesIO
 
-import openpyxl
 from django.contrib.auth.decorators import login_required
+from django.contrib.auth.views import LogoutView
 from django.http import HttpResponseRedirect, JsonResponse, HttpResponse
 from django.shortcuts import render, redirect
 from django.contrib.auth import authenticate, login
@@ -34,6 +34,10 @@ def login_view(request):
             messages.error(request, 'Неверный логин или пароль.')
 
     return render(request, 'login.html')
+
+
+class Logout_View(LogoutView):
+    next_page = '/'
 
 
 class MainView(View):
@@ -86,6 +90,14 @@ def get_messages(request):
     return JsonResponse({'newMessages': has_new})
 
 
+@login_required
+def check_new_order(request):
+    order = Order.objects.filter(status='wait_manager')
+    if order:
+        return JsonResponse({'newMessages': True})
+    return JsonResponse({'newMessages': False})
+
+
 def change_status(request):
     if not request.user.is_authenticated:
         return redirect('login')
@@ -131,11 +143,10 @@ class ProfileView(View):
         return redirect('profile')
 
 
-
 class StatisticsView(View):
 
     def get(self, request):
-        return render(request, 'statistics.html',)
+        return render(request, 'statistics.html', )
 
     def post(self, request):
         wb = statistics(request)

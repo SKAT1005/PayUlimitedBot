@@ -5,7 +5,13 @@ import django
 
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'PayUlimitedBot.settings')
 django.setup()
-from app.models import Products, Order, Cripto
+from app.models import Products, Order, Cripto, ReferralLink
+
+
+def edit_text(markup, param):
+    edit = InlineKeyboardButton(text='Изменить текст', callback_data=f'edit_text|{param}')
+    markup.add(edit)
+    return markup
 
 """ Кнопки главного меню """
 
@@ -14,8 +20,8 @@ def menu():
     markup = InlineKeyboardMarkup(row_width=1)
     catalog = InlineKeyboardButton('Каталог', callback_data='catalog|all|1')
     profile = InlineKeyboardButton('Мой профиль', callback_data='profile')
-    manager_chat = InlineKeyboardButton('Чат с менеджеров', callback_data='manager_chat')
-    referral_program = InlineKeyboardButton('Реферальная программа', callback_data='referral_program|1')
+    manager_chat = InlineKeyboardButton('Чат с менеджером', callback_data='manager_chat')
+    referral_program = InlineKeyboardButton('Реферальная программа', callback_data='referral|1')
     markup.add(catalog, profile, manager_chat, referral_program)
     return markup
 
@@ -36,12 +42,12 @@ def catalog_list(page, param='all', name=None):
     start = 5 * (int(page) - 1)
     end = 5 * int(page)
     if param == 'name':
-        products = Products.objects.filter(name__icontains=name)
+        products = Products.objects.filter(name__icontains=name).order_by('name')
     else:
-        products = Products.objects.all()
+        products = Products.objects.order_by('name')
     alg_filter = InlineKeyboardButton(text='Поиск по названию',
                                       callback_data=f'catalog|name_filter')
-    dont_find = InlineKeyboardButton(text='Не нашел свой сервис',
+    dont_find = InlineKeyboardButton(text='Не нашел сервис',
                                      callback_data=f'catalog|dont_find')
     markup.add(alg_filter, dont_find)
     for product in products[start:end]:
@@ -163,4 +169,39 @@ def go_to_chat(order_id):
     markup = InlineKeyboardMarkup()
     go_to_chat = InlineKeyboardButton('Перейти в чат', callback_data=f'go_to_chat|{order_id}')
     markup.add(go_to_chat)
+    return markup
+
+
+"""Реферальная программа"""
+
+
+def referral(page, user):
+    markup = InlineKeyboardMarkup()
+    menu = InlineKeyboardButton(text='Главное меню', callback_data='menu')
+    create = InlineKeyboardButton(text='Создать ссылку', callback_data=f'referral|create|{page}')
+    state = InlineKeyboardButton(text='Скачать статистику', callback_data=f'referral|state|{page}')
+    markup.add(create, state)
+    start = 5 * (int(page) - 1)
+    end = 5 * int(page)
+    referral_links = ReferralLink.objects.filter(owner=user)
+    for referral_link in referral_links[start:end]:
+        referral_link_button = InlineKeyboardButton(text=referral_link.name,
+                                              callback_data=f'referral|detail|{referral_link.id}|{page}')
+        markup.add(referral_link_button)
+    if start > 0:
+        last = InlineKeyboardButton(text='<<<',
+                                    callback_data=f'referral|{int(page) - 1}')
+        markup.add(last)
+    if end < len(referral_links):
+        next = InlineKeyboardButton(text='>>>',
+                                    callback_data=f'referral|{int(page) + 1}')
+        markup.add(next)
+    markup.add(menu)
+    return markup
+
+
+def referral_go_back(page):
+    markup = InlineKeyboardMarkup()
+    menu = InlineKeyboardButton(text='Назад', callback_data=f'referral|{page}')
+    markup.add(menu)
     return markup

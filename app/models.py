@@ -7,8 +7,12 @@ from const import bot
 
 
 class Client(models.Model):
+    REF_STATUS = (
+        ('start', 'Начинающий рефовод'),
+        ('cool', 'Опытный рефовод')
+    )
     chat_id = models.CharField(max_length=128, verbose_name='ID чата в телеграмме')
-    username = models.CharField(max_length=32, unique=True, verbose_name='Ник клиента')
+    username = models.CharField(max_length=128, null=True, verbose_name='Ник клиента')
     join_time = models.DateField(auto_now_add=True, verbose_name='Время присоединения')
     mailing = models.ManyToManyField('Mailing', blank=True, verbose_name='Рассылки, которые получил пользователь')
     stay_new = models.DateField(blank=True, null=True, verbose_name='Когда стал новым клиентов')
@@ -17,12 +21,19 @@ class Client(models.Model):
                                    verbose_name='Ссылка-приглашения')
     comment = models.TextField(default='', blank=True, null=True, verbose_name='Комментарий по клиенту')
     balance = models.DecimalField(default=0, max_digits=100, decimal_places=2, verbose_name='Баланс клиента')
-    referral_percent = models.IntegerField(default=1, verbose_name='Процент с покупок пользователя')
-    order_id = models.CharField(max_length=8, default=None, blank=True, null=True, verbose_name='Id ордера, по которому ведется диалог')
+    referral_status = models.CharField(max_length=128, default='start', choices=REF_STATUS)
+    order_id = models.CharField(max_length=8, default=None, blank=True, null=True,
+                                verbose_name='Id ордера, по которому ведется диалог')
     need_to_pay = models.DecimalField(default=0, max_digits=100, decimal_places=2, verbose_name='Сумма к оплате')
 
+    is_admin = models.BooleanField(default=False, verbose_name='Является ли админом?')
+
     def __str__(self):
-        return self.username
+        if self.username:
+            return self.username
+        return self.chat_id
+
+
 class ReferralLink(models.Model):
     CATEGORY_CHOICES = (
         ('yt', 'Ютуб'),
@@ -49,17 +60,16 @@ class ReferralLink(models.Model):
 class Products(models.Model):
     name = models.CharField(max_length=128, verbose_name='Имя товара')
     description = models.TextField(blank=True, null=True, verbose_name='Описание товара')
-    price = models.DecimalField(blank=True, null=True, max_digits=100, decimal_places=2, verbose_name='Цена товара в рублях')
+    price = models.DecimalField(blank=True, null=True, max_digits=100, decimal_places=2,
+                                verbose_name='Цена товара в долларах')
     need_enter_price = models.BooleanField(default=False, verbose_name='Требуется ли ввод цены покупки?')
     in_bot = models.BooleanField(default=False, verbose_name='Требуется ли размещение в боте?')
 
 
 class Cripto(models.Model):
     name = models.CharField(max_length=8, verbose_name='Название криптовалюты')
-    course = models.DecimalField(default=100, max_digits=100, decimal_places=2, verbose_name='Курс криптовалюты')
+    course = models.DecimalField(default=100, max_digits=100, decimal_places=8, verbose_name='Курс криптовалюты')
     dec = models.IntegerField(default=2, verbose_name='Кол-во знаков после запятой')
-
-
 
 
 class Manager(AbstractUser):
@@ -79,6 +89,7 @@ class Manager(AbstractUser):
 
     def __str__(self):
         return self.username
+
 
 class Order(models.Model):
     STATUS_CHOICES = (
@@ -116,7 +127,7 @@ class Order(models.Model):
                                verbose_name='Клиент заказа')
 
     product_price = models.DecimalField(max_digits=10, blank=True, null=True, decimal_places=2,
-                                        verbose_name='Цена товара в рублях')
+                                        verbose_name='Цена товара в долларах')
     total_product_price_str = models.CharField(max_length=128, verbose_name='Цена в строке', blank=True)
 
     total_product_price = models.DecimalField(max_digits=10, blank=True, null=True, decimal_places=2,
@@ -124,17 +135,34 @@ class Order(models.Model):
     name = models.CharField(max_length=128, blank=True, null=True, verbose_name='Название продукта')
     is_first_buy = models.BooleanField(default=False, verbose_name='Первая ли это покупка')
 
-    card_holder_id = models.CharField(max_length=8, blank=True, null=True, verbose_name='Id менеджера, чей картой производится оплата')
+    card_holder_id = models.CharField(max_length=8, blank=True, null=True,
+                                      verbose_name='Id менеджера, чей картой производится оплата')
 
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='wait_create',
                               verbose_name='Статус заказа')
     pay_status = models.CharField(max_length=20, choices=PAY_CHOICES, default='question', verbose_name='Статус оплаты')
-    payment_type = models.CharField(max_length=32, blank=True, null=True, choices=PAYMENT_TYPE_CHOICES, verbose_name='Способ оплаты')
+    payment_type = models.CharField(max_length=32, blank=True, null=True, choices=PAYMENT_TYPE_CHOICES,
+                                    verbose_name='Способ оплаты')
     type = models.CharField(max_length=20, choices=TYPE_CHOICES, default='buy', verbose_name='Тип обращения')
     date = models.DateField(blank=True, null=True, verbose_name='Дата для связи с клиентов')
-    time = models.DateField(verbose_name='Время заказа')
+    time = models.DateField(auto_now_add=True, verbose_name='Время заказа')
+    close_time = models.DateField(blank=True, null=True, verbose_name='Время завершения заказа')
     have_new_message = models.BooleanField(default=False, verbose_name='Есть ли новое сообщение?')
     last_message_time = models.DateTimeField(blank=True, null=True, verbose_name='Время последнего сообщения')
+
+    def date_str(self):
+        month = self.date.month
+        day = self.date.day
+        if month < 10:
+            month = f'0{month}'
+        if day < 10:
+            day = f'0{day}'
+        date = f'{self.date.year}-{month}-{day}'
+        return date
+    def get_cardholder(self):
+        if self.card_holder_id:
+            return int(self.card_holder_id)
+        return None
 
 
 class Text(models.Model):
@@ -177,20 +205,32 @@ class ManagerActions(models.Model):
     action = models.CharField(max_length=256, verbose_name='Действие')
     time = models.DateTimeField(auto_now_add=True)
 
+
 class Mailing(models.Model):
     date = models.DateField(auto_now_add=True)
     text = models.TextField(verbose_name='Текст рассылки')
     send_users = models.IntegerField(default=0, verbose_name='Какому кол-ву произошла отправка')
-    buy_users = models.IntegerField(default=0, verbose_name='Сколько пользователей в течении 72 совершили хотя бы 1 покупку')
-    buy_summ = models.DecimalField(max_digits=10, blank=True, null=True, decimal_places=2, verbose_name='Сумма покупок с учетом доли ДК, МОПА и реферальной доли')
+    buy_users = models.IntegerField(default=0,
+                                    verbose_name='Сколько пользователей в течении 72 совершили хотя бы 1 покупку')
+    buy_summ = models.DecimalField(max_digits=10, blank=True, null=True, decimal_places=2,
+                                   verbose_name='Сумма покупок с учетом доли ДК, МОПА и реферальной доли')
 
 
 class BalanceHistory(models.Model):
     total_balance = models.DecimalField(max_digits=10, decimal_places=2, verbose_name='Сумма балансов пользователей')
-    date = models.DateField()
+    date = models.DateField(auto_now_add=True)
 
 
 class Active_users(models.Model):
-    buy_users_count = models.ManyToManyField('Client', blank=True, verbose_name='Кол-во пользователей, которые купили что-либо', related_name='bought_active_users')
-    user_action_count = models.ManyToManyField('Client', blank=True, verbose_name='Кол-во пользователей, которые совершили хотя бы одно действие', related_name='action_active_users')
-    date = models.DateField()
+    buy_users_count = models.ManyToManyField('Client', blank=True,
+                                             verbose_name='Кол-во пользователей, которые купили что-либо',
+                                             related_name='bought_active_users')
+    user_action_count = models.ManyToManyField('Client', blank=True,
+                                               verbose_name='Кол-во пользователей, которые совершили хотя бы одно действие',
+                                               related_name='action_active_users')
+    date = models.DateField(auto_now_add=True)
+
+
+class BotText(models.Model):
+    name = models.CharField(max_length=128)
+    text = models.TextField(default='Пустое текстовое поле')

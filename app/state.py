@@ -112,7 +112,7 @@ def heart_map(wb):
 
 
 def revenue_structure_data(startdate, enddate):
-    orders = Order.objects.filter(time__range=(startdate, enddate), type__in=['buy', 'not_find_product'],
+    orders = Order.objects.filter(close_time__range=(startdate, enddate), type__in=['buy', 'not_find_product'],
                                   pay_status='complite')
     total_purchases = orders
 
@@ -228,7 +228,7 @@ def statistics_for_each_service_data(startdate, enddate):
         prod1 = [product.name]
         prod2 = [product.name]
         for date in dates:
-            orders = Order.objects.filter(name=product.name, time=date.strftime("%Y-%m-%d"),
+            orders = Order.objects.filter(name=product.name, close_time=date.strftime("%Y-%m-%d"),
                                           type__in=['buy', 'not_find_product'],
                                           pay_status='complite')
             if orders:
@@ -292,7 +292,7 @@ def deal_stats_date(startdate, enddate):
     data_1_new = [[], [], []]
     data_2_new = [[], [], []]
     for date in dates:
-        orders = Order.objects.filter(time=date.strftime("%Y-%m-%d"), type__in=['buy', 'not_find_product'],
+        orders = Order.objects.filter(close_time=date.strftime("%Y-%m-%d"), type__in=['buy', 'not_find_product'],
                                       pay_status='complite')
         total_purchases = orders.count()
         total_purchases_new_user = orders.filter(is_first_buy=True).count()
@@ -394,9 +394,9 @@ def mailing_stats(wb, startdate, enddate):
 
 def conversion_data(startdate, enddate):
     startdate = date(year=int(startdate.split('-')[0]), month=int(startdate.split('-')[1]),
-                          day=int(startdate.split('-')[2]))
+                     day=int(startdate.split('-')[2]))
     enddate = date(year=int(enddate.split('-')[0]), month=int(enddate.split('-')[1]),
-                        day=int(enddate.split('-')[2]))
+                   day=int(enddate.split('-')[2]))
     first = [0, 0, 0]
     second = [0, 0, 0]
     for user in Client.objects.filter(join_time__range=[startdate, enddate]):
@@ -532,3 +532,75 @@ def expenses_stats(wb, startdate, enddate):
     chart.y_axis.delete = False
 
     ws.add_chart(chart, "A5")
+
+
+name = {
+    'yt': 'Ютуб',
+    'vk': 'Вконтакте',
+    'tk': 'Тикток',
+    'tv': 'Твитч',
+    'tg': 'Телеграм',
+    'ref': 'Реферальная система'
+}
+
+
+def traffic_state_data(type, startdate, enddate, all_user):
+    clients = Client.objects.filter(join_time__range=[startdate, enddate], invite_ref__type=type)
+    count = clients.count()
+    first_buy = clients.filter(stay_new__range=[startdate, enddate]).count()
+    try:
+        conversion = int(first_buy/count*100)
+    except Exception:
+        conversion = 0
+    try:
+        percent = int(count/all_user*100)
+    except Exception:
+        percent = 0
+    return [name[type], count, percent, first_buy, conversion]
+
+
+def traffic_state(wb, startdate, enddate):
+    clients = Client.objects.filter(join_time__range=[startdate, enddate], invite_ref__type__in=['yt', 'vk', 'tk', 'tv', 'tg', 'ref']).count()
+    data = [traffic_state_data('yt', startdate, enddate, clients),
+            traffic_state_data('vk', startdate, enddate, clients),
+            traffic_state_data('tk', startdate, enddate, clients),
+            traffic_state_data('tv', startdate, enddate, clients),
+            traffic_state_data('tg', startdate, enddate, clients),
+            traffic_state_data('ref', startdate, enddate, clients)]
+    ws = wb.create_sheet("Источники трафика")
+    for row in data:
+        ws.append(row)
+
+
+def link_state_data(link):
+    category = link.type
+    name = link.name
+    users = Client.objects.filter(invite_ref=link).count()
+    new_buy = link.new_user_buy.count()
+    try:
+        new_conversion = int(new_buy/users*100)
+    except Exception:
+        new_conversion = 0
+    new_products_counts = link.new_user_buy.values('name').annotate(count=Count('name')).order_by('-count')
+    new_products_counts_str = ''
+    for item in new_products_counts:
+        new_products_counts_str += f'{item["name"]} {item["count"]}\n'
+    old_buy = link.new_user_buy.count()
+    try:
+        old_conversion = int(new_buy / users * 100)
+    except Exception:
+        old_conversion = 0
+    old_products_counts = link.old_user_buy.values('name').annotate(count=Count('name')).order_by('-count')
+    old_products_counts_str = ''
+    for item in old_products_counts:
+        old_products_counts_str += f'{item["name"]} {item["count"]}\n'
+    return [category, name, users, new_buy, new_conversion, new_products_counts_str, old_buy, old_conversion, old_products_counts_str]
+
+
+def link_state(wb):
+    ws = wb.create_sheet("Статистика ссылок")
+    data = [['Категория', 'Название ссылки', 'Количество переходов', 'Количество новых покупок', 'Конверсия', 'Какие сервисы и в каком колчестве оплачивают новые клиенты', 'Количество старых покупок', 'Конверсия', 'Какие сервисы и в каком колчестве оплачивают старые клиенты']]
+    for link in ReferralLink.objects.all():
+        data.append(link_state_data(link))
+    for row in data:
+        ws.append(row)

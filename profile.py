@@ -4,18 +4,19 @@ import buttons
 from app.models import Order
 from const import bot
 
+from send_text import send_text
+
 
 def profile(chat_id, user):
     text = f'Добро пожаловать в ваш личный кабинет! 🎉\n' \
-           f'Здесь вы можете ознакомится с историей ваших покупок, а так же пополнить баланс' \
+           f'Здесь вы можете ознакомится с историей ваших покупок, а так же пополнить баланс\n' \
            f'Ваш баланс: {user.balance}'
     bot.send_message(chat_id=chat_id, text=text, reply_markup=buttons.profile())
 
 
 def history_list(chat_id, user, page):
-    text = 'Здесь вы найдете все свои оплаченные подписки: даты, суммы и статус платежей. Посмотреть переписку с менеджером, а так же обратиться за помощью'
     markup = buttons.history(page=page, user=user)
-    bot.send_message(chat_id=chat_id, text=text, reply_markup=markup)
+    send_text('history_list', chat_id, markup)
 
 
 def history_detail(chat_id, page, history_id):

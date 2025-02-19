@@ -1,12 +1,12 @@
 import buttons
 from app.models import Products, Order
 from const import bot
+from send_text import send_text
 
 
 def catalog_list(chat_id, page, param, name=None):
-    text = 'Здесь собраны все зарубежные сервисы, которые вы можете оплатить с нашей помощью: видео, музыка, игры, образование, VPN и многое другое. Выбирайте нужный сервис и подключайте подписку без лишних сложностей!'
     markup = buttons.catalog_list(page=page, param=param, name=name)
-    bot.send_message(chat_id=chat_id, text=text, reply_markup=markup)
+    send_text('catalog_list', chat_id, markup)
 
 
 def filter_name(message, chat_id):
@@ -14,8 +14,7 @@ def filter_name(message, chat_id):
         name = message.text
         catalog_list(chat_id=chat_id, page=1, param='name', name=name)
     else:
-        msg = bot.send_message(chat_id=chat_id, text='Введите текст',
-                               reply_markup=buttons.go_to_menu())
+        msg = send_text('filter_name', chat_id, buttons.go_to_menu())
         bot.register_next_step_handler(msg, filter_name, chat_id)
 
 
@@ -32,7 +31,7 @@ def create_order(chat_id, user, type):
     order = Order.objects.create(client=user, type=type, status='wait_manager')
     user.order_id = order.id
     user.save(update_fields=['order_id'])
-    bot.send_message(chat_id=chat_id, text='Опишите, ваш вопрос. В скором времени с вами свяжется наш менеджер')
+    send_text('create_order', chat_id)
 
 def callback(data, user, chat_id):
     if data[0] == 'all':
@@ -40,8 +39,7 @@ def callback(data, user, chat_id):
     elif data[0] == 'name':
         catalog_list(chat_id=chat_id, page=data[2], param=data[0], name=data[1])
     elif data[0] == 'name_filter':
-        msg = bot.send_message(chat_id=chat_id, text='Введите название сервиса, который хотите найти',
-                               reply_markup=buttons.go_to_menu())
+        msg = send_text('filter_name', chat_id, buttons.go_to_menu())
         bot.register_next_step_handler(msg, filter_name, chat_id)
     elif data[0] == 'dont_find':
         create_order(chat_id, user, 'not_find_product')

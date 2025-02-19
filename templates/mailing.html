@@ -6,264 +6,314 @@
     <title>Отдел заботы</title>
     <style>
         body {
-          margin: 0;
-          font-family: 'Arial', sans-serif;
-          background-color: #f7f9fb;
-          display: flex;
-          height: 100vh;
-          overflow: hidden;
-          color: #333;
+            margin: 0;
+            font-family: 'Arial', sans-serif;
+            background-color: #f7f9fb;
+            display: flex;
+            height: 100vh;
+            overflow: hidden;
+            color: #333;
         }
 
         aside {
-          width: 250px;
-          background: #2d3748;
-          color: #fff;
-          display: flex;
-          flex-direction: column;
-          padding: 20px;
-          box-sizing: border-box;
+            width: 250px;
+            background: #2d3748;
+            color: #fff;
+            display: flex;
+            flex-direction: column;
+            padding: 20px;
+            box-sizing: border-box;
         }
 
         aside h1 {
-          margin: 0 0 20px 0;
-          font-size: 20px;
-          font-weight: 600;
+            margin: 0 0 20px 0;
+            font-size: 20px;
+            font-weight: 600;
         }
 
         aside ul {
-          list-style: none;
-          margin: 0;
-          padding: 0;
-          flex: 1;
+            list-style: none;
+            margin: 0;
+            padding: 0;
+            flex: 1;
         }
 
         aside li {
-        display: block;
-          padding: 10px 15px;
-          border-radius: 5px;
-          cursor: pointer;
-          transition: background .3s;
-          margin-bottom: 5px;
-          font-size: 15px;
-          font-weight: 500;
+            display: block;
+            padding: 10px 15px;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background .3s;
+            margin-bottom: 5px;
+            font-size: 15px;
+            font-weight: 500;
         }
 
         aside li:hover {
-          background: #4a5568;
+            background: #4a5568;
         }
 
         aside li.active {
-          background: #1abc9c;
-          color: #fff;
+            background: #1abc9c;
+            color: #fff;
         }
 
         main {
-          flex: 1;
-          display: flex;
-          flex-direction: column;
-          overflow: hidden;
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
         }
 
         .top-bar {
-          background: #fff;
-          padding: 10px 20px;
-          border-bottom: 1px solid #e2e8f0;
-          display: flex;
-          align-items: center;
-          justify-content: space-between;
-          box-sizing: border-box;
+            background: #fff;
+            padding: 10px 20px;
+            border-bottom: 1px solid #e2e8f0;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            box-sizing: border-box;
         }
 
         .top-bar-left, .top-bar-right {
-          display: flex;
-          align-items: center;
-          gap: 15px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
         }
 
         .status-select select {
-          padding: 6px 10px;
-          border: 1px solid #cbd5e0;
-          border-radius: 5px;
-          background: #fff;
-          font-size: 14px;
+            padding: 6px 10px;
+            border: 1px solid #cbd5e0;
+            border-radius: 5px;
+            background: #fff;
+            font-size: 14px;
         }
 
         .new-order-button {
-          background: #1abc9c;
-          color: #fff;
-          border: none;
-          padding: 8px 15px;
-          font-size: 14px;
-          border-radius: 5px;
-          cursor: pointer;
-          transition: background .3s;
+            background: #1abc9c;
+            color: #fff;
+            border: none;
+            padding: 8px 15px;
+            font-size: 14px;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background .3s;
         }
 
         .new-order-button:hover {
-          background: #16a085;
+            background: #16a085;
         }
 
         .content {
-          flex: 1;
-          display: flex;
-          overflow: hidden;
-          background: #fff;
-          padding: 20px;
-          box-sizing: border-box;
-          justify-content: center;
-          align-items: flex-start;
+            flex: 1;
+            display: flex;
+            overflow: hidden;
+            background: #fff;
+            padding: 20px;
+            box-sizing: border-box;
+            justify-content: center;
+            align-items: flex-start;
         }
 
         .care-form {
-          width: 100%;
-          background: #fff;
-          display: flex;
-          flex-direction: column;
-          box-sizing: border-box;
-          gap: 15px;
-          max-width: 400px;
-          margin: 0 auto;
+            width: 100%;
+            background: #fff;
+            display: flex;
+            flex-direction: column;
+            box-sizing: border-box;
+            gap: 15px;
+            max-width: 400px;
+            margin: 0 auto;
         }
 
         .care-form label {
-          display: block;
-          margin-bottom: 5px;
-          font-weight: bold;
-          color: #555;
-          font-size: 14px;
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+            color: #555;
+            font-size: 14px;
         }
 
         .care-form input[type="text"],
         .care-form input[type="number"],
         .care-form input[type="date"],
         .care-form textarea {
-          width: 100%;
-          padding: 8px;
-          margin-bottom: 15px;
-          border: 1px solid #cbd5e0;
-          border-radius: 5px;
-          box-sizing: border-box;
-          font-size: 14px;
-          background: #fff;
+            width: 100%;
+            padding: 8px;
+            margin-bottom: 15px;
+            border: 1px solid #cbd5e0;
+            border-radius: 5px;
+            box-sizing: border-box;
+            font-size: 14px;
+            background: #fff;
         }
 
         .care-form textarea {
-          height: 100px;
+            height: 100px;
         }
 
         .care-form button {
-          background: #1abc9c;
-          color: #fff;
-          border: none;
-          padding: 10px 15px;
-          font-size: 14px;
-          border-radius: 5px;
-          cursor: pointer;
-          transition: background .3s;
-          font-weight: 500;
+            background: #1abc9c;
+            color: #fff;
+            border: none;
+            padding: 10px 15px;
+            font-size: 14px;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background .3s;
+            font-weight: 500;
         }
 
         .care-form button:hover {
-          background: #16a085;
+            background: #16a085;
         }
 
         .care-form h2 {
-          margin-top: 0;
-          font-size: 18px;
-          font-weight: 600;
-          margin-bottom: 10px;
-          text-align: center;
+            margin-top: 0;
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 10px;
+            text-align: center;
         }
 
         .radio-group {
-          display: flex;
-          gap: 10px;
-          margin-bottom: 15px;
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
         }
 
         .radio-group label {
-          font-weight: normal;
-          margin-bottom: 0;
-          display: flex;
-          align-items: center;
-          gap: 5px;
-          font-size: 14px;
-          cursor: pointer;
+            font-weight: normal;
+            margin-bottom: 0;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            font-size: 14px;
+            cursor: pointer;
         }
 
         .selective-fields {
-          display: none;
-          flex-direction: column;
+            display: none;
+            flex-direction: column;
         }
 
         /* Стили для кастомного дропдауна сервиса */
         .custom-dropdown {
-          position: relative;
-          margin-bottom: 15px;
+            position: relative;
+            margin-bottom: 15px;
         }
 
         .custom-dropdown input {
-          width: 100%;
-          padding: 8px;
-          border: 1px solid #cbd5e0;
-          border-radius: 5px;
-          box-sizing: border-box;
-          font-size: 14px;
-          background: #fff;
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #cbd5e0;
+            border-radius: 5px;
+            box-sizing: border-box;
+            font-size: 14px;
+            background: #fff;
         }
 
         .custom-dropdown ul {
-          position: absolute;
-          top: 100%;
-          left: 0; right: 0;
-          background: #fff;
-          border: 1px solid #ccc;
-          border-radius: 0 0 5px 5px;
-          max-height: 120px;
-          overflow-y: auto;
-          display: none;
-          list-style: none;
-          margin: 0;
-          padding: 0;
-          z-index: 999;
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            background: #fff;
+            border: 1px solid #ccc;
+            border-radius: 0 0 5px 5px;
+            max-height: 120px;
+            overflow-y: auto;
+            display: none;
+            list-style: none;
+            margin: 0;
+            padding: 0;
+            z-index: 999;
         }
 
         .custom-dropdown.open ul {
-          display: block;
+            display: block;
         }
 
         .custom-dropdown ul li {
-          padding: 8px;
-          cursor: pointer;
-          transition: background .3s;
-          font-size: 14px;
+            padding: 8px;
+            cursor: pointer;
+            transition: background .3s;
+            font-size: 14px;
         }
 
         .custom-dropdown ul li:hover {
-          background: #f7f7f7;
+            background: #f7f7f7;
         }
 
         ::-webkit-scrollbar {
-          width: 8px;
+            width: 8px;
         }
+
         ::-webkit-scrollbar-track {
-          background: #f0f0f0;
+            background: #f0f0f0;
         }
+
         ::-webkit-scrollbar-thumb {
-          background: #b3b3b3;
-          border-radius: 4px;
+            background: #b3b3b3;
+            border-radius: 4px;
         }
+
         ::-webkit-scrollbar-thumb:hover {
-          background: #999;
+            background: #999;
         }
-    aside li a {
-      color: inherit;          /* Наследуем цвет от li */
-      text-decoration: none;   /* Убираем подчёркивание */
-      display: block;          /* Заставляем ссылку занимать всю ширину li */
-      width: 100%;
-      height: 100%;
-    }
+
+        aside li a {
+            color: inherit; /* Наследуем цвет от li */
+            text-decoration: none; /* Убираем подчёркивание */
+            display: block; /* Заставляем ссылку занимать всю ширину li */
+            width: 100%;
+            height: 100%;
+        }
+
+        .top-bar {
+            background: #fff;
+            padding: 10px 20px;
+            border-bottom: 1px solid #e2e8f0;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            box-sizing: border-box;
+        }
+
+        .top-bar-left, .top-bar-right {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .button {
+            /* Сбрасываем дефолтные стили */
+            border: none;
+            outline: none;
+            display: inline-block;
+            text-align: center;
+            text-decoration: none;
+            cursor: pointer;
+            font-size: 16px;
+            /* Можно также использовать любые встроенные и кастомные шрифты, например, отсюда  */
+            font-family: Roboto, Verdana, Tahoma, sans;
+            /* Тут можно поэкспериментировать */
+            padding: 12px 16px;
+            border-radius: 100px;
+            color: #fff;
+        }
+
+        .button i {
+            margin-right: 4px;
+        }
+
+        .button + .button {
+            margin-left: 6px;
+        }
+
+        .button.green {
+            background: #1abc9c;
+        }
     </style>
 </head>
 <body>
@@ -272,11 +322,27 @@
     <ul>
         <li class="active"><a href="{% url 'main' %}">Главная</a></li>
         <li><a href="{% url 'mailing' %}">Рассылка</a></li>
-        <li><a href="#">Статистика</a></li>
+        <li><a href="{% url 'statistics' %}">Статистика</a></li>
         <li><a href="{% url 'profile' %}">Мой профиль </a></li>
     </ul>
 </aside>
 <main>
+    <div class="top-bar">
+        <div class="top-bar-left">
+            <div class="status-select">
+            </div>
+        </div>
+        <div class="top-bar-right">
+            <form method="post" , action="{% url 'logout' %}">
+                {% csrf_token %}
+                <button type="submit" id="logout" class="button green">
+                    <img height="20px" width="auto"
+                         src="https://img.icons8.com/?size=100&id=2445&format=png&color=000000"></img>
+                </button>
+            </form>
+        </div>
+
+    </div>
     <div class="content">
         <form class="care-form" method="post">
             {% csrf_token %}
@@ -298,7 +364,7 @@
                     <input type="text" id="service-search" name="product" placeholder="Начните ввод...">
                     <ul id="service-list">
                         {% for product in products %}
-                        <li>{{ product.name }}</li>
+                            <li>{{ product.name }}</li>
                         {% endfor %}
                     </ul>
                 </div>
@@ -319,13 +385,13 @@
     const mailTypeRadios = document.querySelectorAll('input[name="mail_type"]');
     const selectiveFields = document.getElementById('selectiveFields');
     mailTypeRadios.forEach(radio => {
-      radio.addEventListener('change', () => {
-        if (radio.value === 'selective') {
-          selectiveFields.style.display = 'flex';
-        } else {
-          selectiveFields.style.display = 'none';
-        }
-      });
+        radio.addEventListener('change', () => {
+            if (radio.value === 'selective') {
+                selectiveFields.style.display = 'flex';
+            } else {
+                selectiveFields.style.display = 'none';
+            }
+        });
     });
 
     // Логика для кастомного дропдауна по аналогии с продуктом
@@ -335,29 +401,29 @@
     const serviceItems = serviceList.querySelectorAll('li');
 
     serviceSearch.addEventListener('focus', () => {
-      serviceDropdown.classList.add('open');
+        serviceDropdown.classList.add('open');
     });
 
     document.addEventListener('click', (e) => {
-      if (!serviceDropdown.contains(e.target)) {
-        serviceDropdown.classList.remove('open');
-      }
+        if (!serviceDropdown.contains(e.target)) {
+            serviceDropdown.classList.remove('open');
+        }
     });
 
-    serviceSearch.addEventListener('input', function() {
-      serviceDropdown.classList.add('open');
-      const filter = this.value.toLowerCase().trim();
-      serviceItems.forEach(item => {
-        const text = item.textContent.toLowerCase();
-        item.style.display = text.includes(filter) ? 'block' : 'none';
-      });
+    serviceSearch.addEventListener('input', function () {
+        serviceDropdown.classList.add('open');
+        const filter = this.value.toLowerCase().trim();
+        serviceItems.forEach(item => {
+            const text = item.textContent.toLowerCase();
+            item.style.display = text.includes(filter) ? 'block' : 'none';
+        });
     });
 
     serviceItems.forEach(item => {
-      item.addEventListener('click', () => {
-        serviceSearch.value = item.textContent;
-        serviceDropdown.classList.remove('open');
-      });
+        item.addEventListener('click', () => {
+            serviceSearch.value = item.textContent;
+            serviceDropdown.classList.remove('open');
+        });
     });
 </script>
 </body>

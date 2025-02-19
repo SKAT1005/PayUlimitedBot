@@ -14,10 +14,10 @@ from app.models import Cripto, BalanceHistory, Client
 
 def usdt_cource():
     while True:
-        url = 'https://api.binance.com/api/v3/avgPrice?symbol=USDTRUB'
         usdt, _ = Cripto.objects.get_or_create(name='USDT')
-        response = requests.get(url)
-        usdt.course = decimal.Decimal(response.json()['price']) + 10
+        url = 'https://min-api.cryptocompare.com/data/price?fsym=USDT&tsyms=RUB'
+        response = requests.get(url).json()
+        usdt.course = decimal.Decimal(response['RUB']) + 10
         usdt.save()
         time.sleep(60*60*24)
 

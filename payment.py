@@ -10,6 +10,7 @@ django.setup()
 from app.models import Order, Cripto, Products, Manager
 from const import bot
 from menu import menu
+from send_text import send_text
 
 data = {
     'bybit': 'UID `19813935`',
@@ -97,23 +98,21 @@ def tup_up_balance(message, chat_id, user, order_id=False, product=False):
         try:
             amount = decimal.Decimal(message.text.replace(',', '.'))
         except Exception:
-            msg = bot.send_message(chat_id=chat_id, text='Введите сумму, на которую хотите пополнить в долларах',
-                                   reply_markup=buttons.go_to_menu())
+            msg = send_text('top_up', chat_id, buttons.go_to_menu())
             bot.register_next_step_handler(msg, tup_up_balance, chat_id, user)
         else:
-            total_amount = calculate_total_price(amount)
             if order_id:
                 order = Order.objects.get(id=order_id)
                 order.product_price = amount
-                order.total_product_price = total_amount
+                order.total_product_price = amount
                 order.save(update_fields=['product_price', 'total_product_price'])
             else:
-                order = create_order(user=user, amount=amount, total_amount=total_amount, product=product)
+                order = create_order(user=user, amount=amount, total_amount=amount, product=product)
             if product:
                 top_up = False
             else:
                 top_up = True
-            text = f'У вас к оплате {total_amount}$. Выберите способ оплаты'
+            text = f'У вас к оплате {amount}$. Выберите способ оплаты'
             bot.send_message(chat_id=chat_id, text=text,
                              reply_markup=buttons.payment_method(order_id=order.id, need_enter_new_amount=True,
                                                                  top_up=top_up))
@@ -122,8 +121,7 @@ def tup_up_balance(message, chat_id, user, order_id=False, product=False):
 def buy_step_one(chat_id, user, prod_id):
     product = Products.objects.get(id=prod_id)
     if product.need_enter_price:
-        msg = bot.send_message(chat_id=chat_id, text='Введите сумму, на которую хотите пополнить в долларах',
-                               reply_markup=buttons.go_to_menu())
+        msg = send_text('enter_price', chat_id, buttons.go_to_menu())
         bot.register_next_step_handler(msg, tup_up_balance, chat_id, user, False, product)
     else:
         amount = product.price
@@ -156,19 +154,22 @@ def accept(chat_id, user, order_id, type):
         order.save(update_fields=['pay_status'])
     user.order_id = order_id
     user.save(update_fields=['order_id'])
-    bot.send_message(chat_id=chat_id, text='Ожидайте. Скоро с вами свяжется менеджер для выполнения вашего заказа. Если хотите что-то узнать - напишите в чат с ботом', reply_markup=buttons.go_to_menu())
+    if order.type == 'top_up':
+        send_text('top_up', chat_id, buttons.go_to_menu())
+    elif order.type == 'not_find_product':
+        send_text('not_find_product', chat_id, buttons.go_to_menu())
+    else:
+        send_text('buy', chat_id, buttons.go_to_menu())
 
 
 def callback(data, user, chat_id):
     if data[0] == 'buy':
         buy_step_one(chat_id=chat_id, prod_id=data[1], user=user)
     elif data[0] == 'top_up':
-        msg = bot.send_message(chat_id=chat_id, text='Введите сумму, на которую хотите пополнить в долларах',
-                               reply_markup=buttons.go_to_menu())
+        msg = send_text('top_up', chat_id, buttons.go_to_menu())
         bot.register_next_step_handler(msg, tup_up_balance, chat_id, user)
     elif data[0] == 'enter_new_amount':
-        msg = bot.send_message(chat_id=chat_id, text='Введите сумму, на которую хотите пополнить в долларах',
-                               reply_markup=buttons.go_to_menu())
+        msg = send_text('enter_price', chat_id, buttons.go_to_menu())
         bot.register_next_step_handler(msg, tup_up_balance, chat_id, user)
     elif data[0] == 'continue':
         if len(data) == 3:
