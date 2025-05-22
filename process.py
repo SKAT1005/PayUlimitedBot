@@ -11,16 +11,6 @@ django.setup()
 
 from app.models import Cripto, BalanceHistory, Client
 
-
-def usdt_cource():
-    while True:
-        usdt, _ = Cripto.objects.get_or_create(name='USDT')
-        url = 'https://min-api.cryptocompare.com/data/price?fsym=USDT&tsyms=RUB'
-        response = requests.get(url).json()
-        usdt.course = decimal.Decimal(response['RUB']) + 10
-        usdt.save()
-        time.sleep(60*60*24)
-
 def get_balance():
     while True:
         total_balance = Client.objects.aggregate(total=Sum('balance'))['total']

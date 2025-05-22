@@ -33,7 +33,7 @@ def continue_payment(chat_id, user, order_id, type, currency=None):
     if Manager.objects.filter(status='online').count() == 0:
         attention = '\n\nВнимание! На данный момент все менеджеры заняты, время ответа может быть больше обычного. С вами свяжется первый освободившийся менеджер.'
     if type == 'balance':
-        if user.balance <= order.total_product_price:
+        if user.balance < order.total_product_price:
             text = 'На вашем балансе недостаточно средств. Выберите другой способ оплаты'
             bot.send_message(chat_id=chat_id,
                              text=text,
@@ -43,9 +43,15 @@ def continue_payment(chat_id, user, order_id, type, currency=None):
             bot.send_message(chat_id=chat_id, text=text,
                              reply_markup=buttons.accept(order_id=order_id, type=type))
     elif type == 'card':
+        text = f'У вас к оплате {order.total_product_price_str} рублей. Подтвердите то, что вы хотите произвести оплату переводом рублей.\n\n ' \
+               'После подтверждения с вами свяжется менеджер, чтобы передать вам реквизиты для оплаты\n\n' \
+               'Гайд на перевод денег 👉 https://t.me/+ZDgdxKDKd35iZDV\n\n' \
+               'FAQ\n\n' \
+               '- Почему курс выше чем у ЦБ?\n\n' \
+               '<blockquote>Мы не принимаем деньги на личные реквизиты. Реквизиты нам выдает эквайринг. Для оплаты нам надо пополнить зарубежную карту в долларах. Сделать это можно, только через эквайринг. Эквайринг хочет заработать и завышает курс.</blockquote>'
         bot.send_message(chat_id=chat_id,
-                         text=f'У вас к оплате {order.total_product_price_str} рублей. Подтвердите то, что вы хотите произвести оплату картой. После подтверждения с вами свяжется менеджер, чтобы передать вам реквезиты для оплаты' + attention,
-                         reply_markup=buttons.accept(order_id=order_id, type=type))
+                         text=text + attention,
+                         reply_markup=buttons.accept(order_id=order_id, type=type), parse_mode='HTML')
     else:
         if not currency:
             text = 'Выберите валюту, которой хотите произвести оплату'
@@ -97,22 +103,26 @@ def tup_up_balance(message, chat_id, user, order_id=False, product=False):
     if message.content_type == 'text':
         try:
             amount = decimal.Decimal(message.text.replace(',', '.'))
+            total_product_price = amount
         except Exception:
             msg = send_text('top_up', chat_id, buttons.go_to_menu())
             bot.register_next_step_handler(msg, tup_up_balance, chat_id, user)
         else:
-            if order_id:
-                order = Order.objects.get(id=order_id)
-                order.product_price = amount
-                order.total_product_price = amount
-                order.save(update_fields=['product_price', 'total_product_price'])
-            else:
-                order = create_order(user=user, amount=amount, total_amount=amount, product=product)
             if product:
+                total_product_price = calculate_total_price(amount)
                 top_up = False
             else:
                 top_up = True
-            text = f'У вас к оплате {amount}$. Выберите способ оплаты'
+            if order_id:
+                order = Order.objects.get(id=order_id)
+                if order.type != 'top_up':
+                    total_product_price = calculate_total_price(amount)
+                order.product_price = amount
+                order.total_product_price = total_product_price
+                order.save(update_fields=['product_price', 'total_product_price'])
+            else:
+                order = create_order(user=user, amount=amount, total_amount=total_product_price, product=product)
+            text = f'У вас к оплате {total_product_price}$. Выберите способ оплаты'
             bot.send_message(chat_id=chat_id, text=text,
                              reply_markup=buttons.payment_method(order_id=order.id, need_enter_new_amount=True,
                                                                  top_up=top_up))
@@ -154,12 +164,14 @@ def accept(chat_id, user, order_id, type):
         order.save(update_fields=['pay_status'])
     user.order_id = order_id
     user.save(update_fields=['order_id'])
-    if order.type == 'top_up':
-        send_text('top_up', chat_id, buttons.go_to_menu())
-    elif order.type == 'not_find_product':
-        send_text('not_find_product', chat_id, buttons.go_to_menu())
-    else:
-        send_text('buy', chat_id, buttons.go_to_menu())
+    if order.payment_type == 'bybit':
+        send_text('bybit', chat_id, buttons.go_to_menu())
+    elif order.payment_type == 'wallet':
+        send_text('wallet', chat_id, buttons.go_to_menu())
+    elif order.payment_type == 'card':
+        send_text('card', chat_id, buttons.go_to_menu())
+    elif order.payment_type == 'balance':
+        send_text('balance', chat_id, buttons.go_to_menu())
 
 
 def callback(data, user, chat_id):
@@ -170,7 +182,7 @@ def callback(data, user, chat_id):
         bot.register_next_step_handler(msg, tup_up_balance, chat_id, user)
     elif data[0] == 'enter_new_amount':
         msg = send_text('enter_price', chat_id, buttons.go_to_menu())
-        bot.register_next_step_handler(msg, tup_up_balance, chat_id, user)
+        bot.register_next_step_handler(msg, tup_up_balance, chat_id, user, data[1])
     elif data[0] == 'continue':
         if len(data) == 3:
             continue_payment(chat_id=chat_id, user=user, type=data[1], order_id=data[2])

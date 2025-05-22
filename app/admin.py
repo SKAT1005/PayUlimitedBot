@@ -1,8 +1,20 @@
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin
 
-from .models import ReferralLink, Client, Manager, Products, Cripto, Order, BalanceHistory, ManagerActions, Active_users, Mailing
+from .models import ReferralLink, Client, Manager, Products, Cripto, Order, BalanceHistory, ManagerActions, Active_users, Mailing, Comission, BotText
 
+
+
+
+
+
+@admin.register(BotText)
+class BotTextAdmin(admin.ModelAdmin):
+    list_display = ['id', 'name']
+
+@admin.register(Comission)
+class ComissionAdmin(admin.ModelAdmin):
+    pass
 
 
 @admin.register(Mailing)
@@ -21,8 +33,9 @@ class Active_usersAdmin(admin.ModelAdmin):
 
 @admin.register(Order)
 class OrderAdmin(admin.ModelAdmin):
-    list_display = ('client', 'name', 'time')
-    list_filter = ('client', 'name', 'type')
+    list_display = ('id', 'client', 'name', 'time')
+    list_filter = ('client', 'name', 'type', 'time')
+    ordering = ('time',)
 
 
 @admin.register(ManagerActions)
@@ -61,12 +74,12 @@ class ManagerAdmin(UserAdmin):
     # Настроим поля для редактирования
     fieldsets = (
         (None, {'fields': ('username', 'password')}),
-        ('Personal info', {'fields': ('commission_balance', 'is_friend', 'status')}),
+        ('Personal info', {'fields': ('commission_balance', 'is_friend', 'is_accountant', 'status')}),
     )
 
     add_fieldsets = (
         (None, {'fields': ('username', 'password1', 'password2')}),
-        ('Personal info', {'fields': ('commission_balance', 'is_friend', 'status')}),
+        ('Personal info', {'fields': ('commission_balance', 'is_friend', 'is_accountant', 'status')}),
     )
 
     # Форма при редактировании
@@ -77,7 +90,7 @@ class ManagerAdmin(UserAdmin):
             return fieldsets
         return [
             (None, {'fields': ('username', 'password', 'status')}),
-            ('Personal info', {'fields': ('commission_balance', 'is_friend')}),
+            ('Personal info', {'fields': ('commission_balance', 'is_friend', 'is_accountant',)}),
         ]
 
 

@@ -32,15 +32,18 @@ def send_text(param, chat_id, markup=None):
     type = 'text'
     entities = []
     media = None
-    if ln == 2 and ('video' in params[1] or 'photo' in params[1]):
-        type = params[1].split('_')[0]
-        media = params[1].split('_')[1]
+
+    if ln == 2 and ('video' in params[1] or 'photo' in params[1] or 'animation' in params[1]):
+        type = params[1].split('___')[0]
+        media = params[1].split('___')[1]
     elif ln == 2:
         entities = get_enteties(params[1])
     elif ln == 3:
-        type = params[1].split('_')[0]
+        type = params[2].split('___')[0]
         entities = get_enteties(params[1])
-        media = params[2].split('_')[1]
+        media = params[2].split('___')[1]
+    print(type)
+    print(media)
     if type == 'text':
         return bot.send_message(chat_id=chat_id, text=text, entities=entities, reply_markup=markup)
     elif type == 'photo':
@@ -48,10 +51,19 @@ def send_text(param, chat_id, markup=None):
             return bot.send_photo(chat_id=chat_id, photo=media, caption=text, caption_entities=entities,
                                   reply_markup=markup)
         except Exception as ex:
+            print(ex)
             return bot.send_message(chat_id=chat_id, text='Главное меню', reply_markup=markup)
     elif type == 'video':
         try:
             return bot.send_video(chat_id=chat_id, photo=media, caption=text, caption_entities=entities,
                                   reply_markup=markup)
         except Exception as ex:
+            print(ex)
+            return bot.send_message(chat_id=chat_id, text='Главное меню', reply_markup=markup)
+    elif type == 'animation':
+        try:
+            return bot.send_animation(chat_id=chat_id, animation=media, caption=text, caption_entities=entities,
+                                  reply_markup=markup)
+        except Exception as ex:
+            print(ex)
             return bot.send_message(chat_id=chat_id, text='Главное меню', reply_markup=markup)

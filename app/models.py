@@ -17,7 +17,7 @@ class Client(models.Model):
     mailing = models.ManyToManyField('Mailing', blank=True, verbose_name='Рассылки, которые получил пользователь')
     stay_new = models.DateField(blank=True, null=True, verbose_name='Когда стал новым клиентов')
     stay_old = models.DateField(blank=True, null=True, verbose_name='Когда стал старым клиентом')
-    invite_ref = models.ForeignKey('ReferralLink', blank=True, null=True, on_delete=models.PROTECT, related_name='usr',
+    invite_ref = models.ForeignKey('ReferralLink', blank=True, null=True, on_delete=models.SET_NULL, related_name='usr',
                                    verbose_name='Ссылка-приглашения')
     comment = models.TextField(default='', blank=True, null=True, verbose_name='Комментарий по клиенту')
     balance = models.DecimalField(default=0, max_digits=100, decimal_places=2, verbose_name='Баланс клиента')
@@ -86,17 +86,25 @@ class Manager(AbstractUser):
         verbose_name="Статус"
     )
     is_friend = models.BooleanField(default=False, verbose_name='Является ли сотрудником отдела заботы?')
+    is_accountant = models.BooleanField(default=False, verbose_name='Является ли бухгалтером?')
 
     def __str__(self):
         return self.username
 
-
+class IndividualMailing(models.Model):
+    manager = models.ForeignKey('Manager', on_delete=models.CASCADE, related_name='individual_mailings', verbose_name='Менеджер рассылки')
+    client = models.ForeignKey('Client', on_delete=models.CASCADE, related_name='individual_mailings_client', verbose_name='Пользователь рассылки рассылки')
+    is_buy = models.BooleanField(default=False, verbose_name='Произвел ли покупку в течении трех дней')
+    buy_summ = models.DecimalField(max_digits=10, blank=True, default=0, decimal_places=2,
+                                   verbose_name='Сумма покупок с учетом доли ДК, МОПА и реферальной доли')
+    time = models.DateTimeField(auto_now=True, verbose_name='Время рассылки')
 class Order(models.Model):
     STATUS_CHOICES = (
         ('wait_create', 'Ожидает создания'),
         ('wait_manager', 'Ожидаем ответа менеджера'),
         ('dialog_with_manager', 'Общаемся с менеджером'),
         ('chat_with_friend', 'Направлен в отел заботы'),
+        ('wait_account_approve', 'Ожидает подтверждения от бухгалтерии'),
         ('complite', 'Завершен'),
     )
     PAY_CHOICES = (
@@ -106,6 +114,7 @@ class Order(models.Model):
         ('pay_complite', 'Оплата прошла успешно'),
         ('give_card', 'Дал карту'),
         ('faild_pay', 'На балансе недостаточно средств'),
+        ('complite_buy_manager', 'Сделка с менеджером завершена успешно'),
         ('complite', 'Сделка завершена успешно'),
         ('cansel', 'Сделка не завершена')
     )
@@ -122,8 +131,8 @@ class Order(models.Model):
         ('other', 'Другой вопрос')
     )
     manager = models.ForeignKey('Manager', blank=True, null=True, related_name='orders_for_manager',
-                                on_delete=models.PROTECT, verbose_name='Менеджер заказа')
-    client = models.ForeignKey('Client', related_name='orders_for_user', on_delete=models.PROTECT,
+                                on_delete=models.SET_NULL , verbose_name='Менеджер заказа')
+    client = models.ForeignKey('Client', null=True, related_name='orders_for_user', on_delete=models.SET_NULL ,
                                verbose_name='Клиент заказа')
 
     product_price = models.DecimalField(max_digits=10, blank=True, null=True, decimal_places=2,
@@ -212,7 +221,7 @@ class Mailing(models.Model):
     send_users = models.IntegerField(default=0, verbose_name='Какому кол-ву произошла отправка')
     buy_users = models.IntegerField(default=0,
                                     verbose_name='Сколько пользователей в течении 72 совершили хотя бы 1 покупку')
-    buy_summ = models.DecimalField(max_digits=10, blank=True, null=True, decimal_places=2,
+    buy_summ = models.DecimalField(max_digits=10, blank=True, default=0, decimal_places=2,
                                    verbose_name='Сумма покупок с учетом доли ДК, МОПА и реферальной доли')
 
 
@@ -234,3 +243,8 @@ class Active_users(models.Model):
 class BotText(models.Model):
     name = models.CharField(max_length=128)
     text = models.TextField(default='Пустое текстовое поле')
+
+
+class Comission(models.Model):
+    manager = models.IntegerField(default=10, verbose_name='Процент МОПа')
+    cardholder = models.IntegerField(default=10, verbose_name='Держателя карты')

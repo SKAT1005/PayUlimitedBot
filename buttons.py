@@ -2,27 +2,35 @@ from telebot.types import InlineKeyboardButton, InlineKeyboardMarkup
 import os
 import django
 
-
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'PayUlimitedBot.settings')
 django.setup()
 from app.models import Products, Order, Cripto, ReferralLink
 
 
 def edit_text(markup, param):
+    if not markup:
+        markup = InlineKeyboardMarkup()
     edit = InlineKeyboardButton(text='Изменить текст', callback_data=f'edit_text|{param}')
     markup.add(edit)
     return markup
+
 
 """ Кнопки главного меню """
 
 
 def menu():
-    markup = InlineKeyboardMarkup(row_width=1)
+    markup = InlineKeyboardMarkup()
     catalog = InlineKeyboardButton('Каталог', callback_data='catalog|all|1')
     profile = InlineKeyboardButton('Мой профиль', callback_data='profile')
     manager_chat = InlineKeyboardButton('Чат с менеджером', callback_data='manager_chat')
+    reviews = InlineKeyboardButton(text='Чат с отзывами', url='https://t.me/Pay_Unlimited_Chat')
+    teh = InlineKeyboardButton(text='Техническая поддержка', url='https://t.me/manager_pu')
     referral_program = InlineKeyboardButton('Реферальная программа', callback_data='referral|1')
-    markup.add(catalog, profile, manager_chat, referral_program)
+    markup.add(catalog)
+    markup.add(profile)
+    markup.add(referral_program)
+    markup.add(manager_chat)
+    markup.add(reviews, teh)
     return markup
 
 
@@ -42,9 +50,9 @@ def catalog_list(page, param='all', name=None):
     start = 5 * (int(page) - 1)
     end = 5 * int(page)
     if param == 'name':
-        products = Products.objects.filter(name__icontains=name).order_by('name')
+        products = Products.objects.filter(name__icontains=name, in_bot=True).order_by('name')
     else:
-        products = Products.objects.order_by('name')
+        products = Products.objects.filter(in_bot=True).order_by('name')
     alg_filter = InlineKeyboardButton(text='Поиск по названию',
                                       callback_data=f'catalog|name_filter')
     dont_find = InlineKeyboardButton(text='Не нашел сервис',
@@ -77,8 +85,9 @@ def catalog_list(page, param='all', name=None):
 def prod_detail(page, prod_id):
     markup = InlineKeyboardMarkup(row_width=1)
     pay = InlineKeyboardButton('Перейти к оплате', callback_data=f'payment|buy|{prod_id}')
+    manager_chat = InlineKeyboardButton('Чат с менеджером', callback_data='manager_chat')
     back = InlineKeyboardButton('Назад', callback_data=f'catalog|all|{page}')
-    markup.add(pay, back)
+    markup.add(pay, manager_chat, back)
     return markup
 
 
@@ -99,7 +108,8 @@ def history(page, user):
     menu = InlineKeyboardButton(text='Главное меню', callback_data='menu')
     start = 5 * (int(page) - 1)
     end = 5 * int(page)
-    historys = Order.objects.filter(client=user, status='complite', pay_status='complite', type__in=['buy', 'not_find_product'])
+    historys = Order.objects.filter(client=user, status='complite', pay_status='complite',
+                                    type__in=['buy', 'not_find_product'])
     for history in historys[start:end]:
         product_button = InlineKeyboardButton(text=history.name,
                                               callback_data=f'profile|history_detail|{history.id}|{page}')
@@ -144,10 +154,12 @@ def payment_method(order_id, need_enter_new_amount=False, top_up=False):
     markup.add(back)
     return markup
 
+
 def coose_cripto(type, order_id):
     markup = InlineKeyboardMarkup(row_width=1)
     for cripto in Cripto.objects.all():
-        button = InlineKeyboardButton(text=cripto.name, callback_data=f'payment|continue|{type}|{order_id}|{cripto.name}')
+        button = InlineKeyboardButton(text=cripto.name,
+                                      callback_data=f'payment|continue|{type}|{order_id}|{cripto.name}')
         markup.add(button)
     return markup
 
@@ -186,7 +198,7 @@ def referral(page, user):
     referral_links = ReferralLink.objects.filter(owner=user)
     for referral_link in referral_links[start:end]:
         referral_link_button = InlineKeyboardButton(text=referral_link.name,
-                                              callback_data=f'referral|detail|{referral_link.id}|{page}')
+                                                    callback_data=f'referral|detail|{referral_link.id}|{page}')
         markup.add(referral_link_button)
     if start > 0:
         last = InlineKeyboardButton(text='<<<',
@@ -200,8 +212,22 @@ def referral(page, user):
     return markup
 
 
-def referral_go_back(page):
+def referral_go_back(page, link_id):
+    markup = InlineKeyboardMarkup(row_width=1)
+    menu = InlineKeyboardButton(text='Назад', callback_data=f'referral|{page}')
+    delete = InlineKeyboardButton(text='Удалить реферальную ссылку', callback_data=f'referral|delete|{link_id}|{page}')
+    markup.add(menu, delete)
+    return markup
+
+def referral_back(page):
     markup = InlineKeyboardMarkup()
     menu = InlineKeyboardButton(text='Назад', callback_data=f'referral|{page}')
-    markup.add(menu)
+    markup.add(menu,)
+    return markup
+
+def delete_referral(link_id, page):
+    markup = InlineKeyboardMarkup()
+    yes = InlineKeyboardButton(text='Да', callback_data=f'referral|delete_accept|{link_id}|{page}')
+    no = InlineKeyboardButton(text='Нет', callback_data=f'referral|{page}')
+    markup.add(yes, no)
     return markup

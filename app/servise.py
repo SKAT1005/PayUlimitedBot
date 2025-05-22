@@ -5,8 +5,9 @@ import openpyxl
 from django.http import HttpResponse
 
 import buttons
-from app.models import Cripto, Order, Manager, Products, Text, Client, ManagerActions
+from app.models import Cripto, Order, Manager, Products, Text, Client, ManagerActions, IndividualMailing
 from const import bot
+from send_text import send_text
 from .state import *
 
 
@@ -23,7 +24,7 @@ def get_context_main_menu(request):
         order_history = Order.objects.filter(client=client)
         n = len(order_history)
         n = max(n - 5, 0)
-        order_history = order_history[n:]
+        order_history = order_history[n:len(order_history) - 1]
     except Exception as e:
         chat = None
         order_history = []
@@ -33,7 +34,9 @@ def get_context_main_menu(request):
     products = Products.objects.all()
     untake_order = Order.objects.filter(status='wait_manager').count()
     if request.user.is_friend:
-        manager_chats = Order.objects.filter(status='chat_with_friend')
+        manager_chats = Order.objects.filter(status='chat_with_friend').order_by('date')
+    elif request.user.is_accountant:
+        manager_chats = Order.objects.filter(type__in=['buy', 'not_find_product'], status='wait_account_approve')
     else:
         manager_chats = request.user.orders_for_manager.filter(status='dialog_with_manager').order_by(
             '-last_message_time')
@@ -63,8 +66,15 @@ def get_new_order(manager):
 def send_manager(request):
     order_id = request.POST.get('order_id')
     order = Order.objects.get(id=order_id)
-    order.status = 'wait_manager'
-    order.save(update_fields=['status'])
+    manager_id = request.POST.get('send_manager_id')
+    if manager_id != 'none':
+        manager = Manager.objects.get(id=manager_id)
+        order.manager = manager
+        order.status = 'dialog_with_manager'
+        order.save(update_fields=['status', 'manager'])
+    else:
+        order.status = 'wait_manager'
+        order.save(update_fields=['status'])
 
 
 def send_message(request):
@@ -74,6 +84,13 @@ def send_message(request):
         order = Order.objects.get(id=chat_id)
         client = order.client
         Text.objects.create(sender='manager', text=text, order=order)
+        if request.user.is_friend:
+            mailing = IndividualMailing.objects.filter(client=client).last()
+            if (mailing and (mailing.time + timedelta(days=3) < timezone.now() or mailing.is_buy)) or not mailing:
+                n = IndividualMailing.objects.create(
+                    manager=request.user,
+                    client=client
+                )
         if client.order_id == str(order.id):
             try:
                 bot.send_message(chat_id=order.client.chat_id, text=text)
@@ -91,34 +108,7 @@ def change_order(request):
     order_id = request.POST.get('order_id')
     order = Order.objects.get(id=order_id)
     client = order.client
-    if order.type == 'buy':
-        balance = request.POST.get('balance')
-        client.balance = decimal.Decimal(balance)
-        client.save(update_fields=['balance'])
-        comment = request.POST.get('comment')
-        card_holder_id = request.POST.get('card_holder_id')
-        pay_status = request.POST.get('pay_status')
-        date = request.POST.get('date')
-        client.comment = comment
-        order.card_holder_id = card_holder_id
-        order.pay_status = pay_status
-        if date:
-            order.date = date
-            order.save(update_fields=['date'])
-        if date:
-            Order.objects.create(
-                client=client,
-                name=order.name,
-                product_price=order.product_price,
-                total_product_price=order.total_product_price,
-                payment_type=order.payment_type,
-                pay_status=pay_status,
-                status='chat_with_friend',
-                date=date
-            )
-        order.save(update_fields=['card_holder_id', 'pay_status'])
-        client.save(update_fields=['comment'])
-    elif order.type == 'top_up':
+    if order.type == 'top_up':
         balance = request.POST.get('balance')
         client.balance = decimal.Decimal(balance)
         client.save(update_fields=['balance'])
@@ -134,7 +124,7 @@ def change_order(request):
         order.payment_type = payment_type
         order.save(update_fields=['pay_status', 'product_price', 'total_product_price', 'payment_type'])
         client.save(update_fields=['comment'])
-    elif order.type == 'not_find_product':
+    elif order.type in ['not_find_product', 'buy']:
         balance = request.POST.get('balance')
         client.balance = decimal.Decimal(balance)
         client.save(update_fields=['balance'])
@@ -158,17 +148,6 @@ def change_order(request):
         if date:
             order.date = date
             order.save(update_fields=['date'])
-        if date:
-            Order.objects.create(
-                client=client,
-                name=name,
-                product_price=product_price,
-                total_product_price=total_product_price,
-                payment_type=payment_type,
-                pay_status=pay_status,
-                status='chat_with_friend',
-                date=date
-            )
         order.save(update_fields=['name', 'product_price', 'total_product_price', 'payment_type', 'card_holder_id',
                                   'pay_status'])
         client.save(update_fields=['comment'])
@@ -192,76 +171,128 @@ def send_to_friend(request):
 def count_ref(order, client):
     link = client.invite_ref
     ref = link.owner
+    is_good_deal = order.total_product_price > order.product_price
     if client.stay_old or client.stay_new:
         link.old_user_buy.add(order)
     else:
         link.new_user_buy.add(order)
         link.last_invite_buyer_user_time = timezone.now()
         link.save(update_fields=['last_invite_buyer_user_time'])
-    if ref.referral_status == 'start':
-        if 1 <= order.product_price <= 20:
-            percent = round(order.product_price * 0.04, 2)
-        elif 21 <= order.product_price <= 50:
-            percent = round(order.product_price * 0.027, 2)
-        else:
-            percent = round(order.product_price * 0.018, 2)
-    elif ref.referral_status == 'cool':
-        if 1 <= order.product_price <= 20:
-            percent = round(order.product_price * 0.05, 2)
-        elif 21 <= order.product_price <= 50:
-            percent = round(order.product_price * 0.032, 2)
-        else:
-            percent = round(order.product_price * 0.023, 2)
-    ref.balance += decimal.Decimal(percent)
-    ref.save(update_fields=['balance'])
-    link.money += decimal.Decimal(percent)
-    ref.save(update_fields=['money'])
+    if is_good_deal:
+        if ref.referral_status == 'start':
+            if 1 <= order.total_product_price <= 20:
+                percent = round(float(order.total_product_price) * 0.04, 2)
+            elif 21 <= order.total_product_price <= 50:
+                percent = round(float(order.total_product_price) * 0.027, 2)
+            else:
+                percent = round(float(order.total_product_price) * 0.018, 2)
+        elif ref.referral_status == 'cool':
+            if 1 <= order.total_product_price <= 20:
+                percent = round(float(order.total_product_price) * 0.05, 2)
+            elif 21 <= order.total_product_price <= 50:
+                percent = round(float(order.total_product_price) * 0.032, 2)
+            else:
+                percent = round(float(order.total_product_price) * 0.023, 2)
+        ref.balance += decimal.Decimal(percent)
+        ref.save(update_fields=['balance'])
+        link.money += decimal.Decimal(percent)
+        link.save(update_fields=['money'])
 
+
+def calculate_comission(order, client, manager):
+    comission = Comission.objects.get(id=1)
+    manager_comission = comission.manager
+    cardholder_comission = comission.cardholder
+    active, _ = Active_users.objects.get_or_create(date=timezone.now())
+    mailing = IndividualMailing.objects.filter(client=client).last()
+    manager_commission_balance = decimal.Decimal(
+        (float(order.total_product_price) - float(order.product_price)) * (manager_comission / 100))
+    card_holder_commission_balance = decimal.Decimal(
+        (float(order.total_product_price) - float(order.product_price)) * (cardholder_comission / 100))
+    if mailing and mailing.time + timedelta(days=3) >= timezone.now() and not mailing.is_buy:
+        mailing.is_buy = True
+        mailing.buy_summ = order.total_product_price - order.product_price - manager_commission_balance - card_holder_commission_balance
+        mailing.save(update_fields=['is_buy', 'buy_summ'])
+    if client not in active.buy_users_count.all():
+        active.buy_users_count.add(client)
+    manager.commission_balance += manager_commission_balance
+    manager.save(update_fields=['commission_balance'])
+    card_holder = Manager.objects.filter(id=order.card_holder_id).first()
+    if card_holder:
+        card_holder.commission_balance += card_holder_commission_balance
+        card_holder.save(update_fields=['commission_balance'])
 
 def close_order(request):
     change_order(request)
     order_id = request.POST.get('order_id')
     order = Order.objects.get(id=order_id)
     manager = order.manager
-    order.status = 'complite'
     order.close_time = timezone.now()
-    order.save(update_fields=['status', 'close_time'])
+    order.save(update_fields=['close_time'])
     client = order.client
-    if order.type in ('buy', 'not_find_product'):
-        if order.pay_status == 'complite':
-            if client.invite_ref:
-                count_ref(order=order, client=client)
-            for mail in client.mailing.all():
-                if mail.date >= timezone.now() - timedelta(days=3):
-                    mail.buy_users += 1
-                    mail.buy_summ += order.total_product_price
-                    mail.save(update_fields=['buy_users', 'buy_summ'])
-                client.mailing.remove(mail)
-            if not client.stay_new:
-                client.stay_new = timezone.now()
-                client.save(update_fields=['stay_new'])
-            else:
-                if not client.stay_old:
-                    client.stay_old = timezone.now()
-                    client.save(update_fields=['stay_old'])
-            active, _ = Active_users.objects.get_or_create(date=timezone.now())
-            active.buy_users_count.add(client)
-            manager.commission_balance += decimal.Decimal(float(order.total_product_price) * 0.1)
-            manager.save(update_fields=['commission_balance'])
-            card_holder = Manager.objects.filter(id=order.card_holder_id).first()
-            card_holder.commission_balance += decimal.Decimal(float(order.total_product_price) * 0.1)
-            card_holder.save(update_fields=['commission_balance'])
-    elif order.type == 'top_up':
-        if order.pay_status == 'complite':
-            client.balance += decimal.Decimal(order.product_price)
-            client.save(update_fields=['balance'])
-            try:
-                bot.send_message(chat_id=client.chat_id, text=f'Ваш баланс успешно пополнен на {order.product_price}$',
-                                 reply_markup=buttons.go_to_menu())
-            except Exception:
-                pass
+    if request.user.is_accountant:
+        order.status = 'complite'
+        order.save(update_fields=['status'])
+        calculate_comission(manager=manager, order=order, client=client)
+        if client.invite_ref:
+            count_ref(order=order, client=client)
+    else:
+        if order.date and order.pay_status == 'complite':
+            Order.objects.create(
+                client=client,
+                name=order.name,
+                product_price=order.product_price,
+                total_product_price=order.total_product_price,
+                payment_type=order.payment_type,
+                status='chat_with_friend',
+                date=order.date
+            )
+        if order.type in ('buy', 'not_find_product'):
+            if order.pay_status == 'complite':
+                order.status = 'wait_account_approve'
+                order.save(update_fields=['status'])
+                send_text('good_close_order_buy', client.chat_id)
+                for mail in client.mailing.all():
+                    if mail.date >= timezone.now().date() - timedelta(days=3):
+                        mail.buy_users += 1
+                        mail.buy_summ += order.total_product_price
+                        mail.save(update_fields=['buy_users', 'buy_summ'])
+                    client.mailing.remove(mail)
+                if not client.stay_new:
+                    client.stay_new = timezone.now()
+                    client.save(update_fields=['stay_new'])
+                else:
+                    if not client.stay_old:
+                        client.stay_old = timezone.now()
+                        client.save(update_fields=['stay_old'])
+            elif order.type == 'buy' and order.payment_type == 'balance':
+                client.balance += order.total_product_price
+                client.save(update_fields='balance')
+                send_text('bad_close_order_buy', client.chat_id)
+            if order.pay_status != 'complite':
+                order.status = 'complite'
+                order.save(update_fields=['status'])
+        elif order.type == 'top_up':
+            order.status = 'complite'
+            order.save(update_fields=['status'])
+            if order.pay_status == 'complite':
+                client.balance += decimal.Decimal(order.product_price)
+                client.save(update_fields=['balance'])
+                try:
+                    bot.send_message(chat_id=client.chat_id, text=f'Ваш баланс успешно пополнен на {order.product_price}$',
+                                     reply_markup=buttons.go_to_menu())
+                except Exception:
+                    pass
+        else:
+            order.status = 'complite'
+            order.save()
 
-
+def close_order_friend(request):
+    order_id = request.POST.get('order_id')
+    order = Order.objects.get(id=order_id)
+    order.pay_status = 'cansel'
+    order.status = 'complite'
+    order.save(update_fields=['pay_status', 'status'])
 def top_down_balance(request):
     order_id = request.POST.get('order_id')
     order = Order.objects.get(id=order_id)
@@ -279,28 +310,33 @@ def top_down_balance(request):
 def get_context_profile(manager):
     list = {}
     if not manager.is_staff:
-        orders_manager = Order.objects.filter(manager=manager, type__in=['buy', 'not_find_product'],
-                                              pay_status='complite', status='complite')
-        orders_card_holder = Order.objects.filter(card_holder_id=manager.id, pay_status='complite', status='complite')
-        for order in orders_manager:
-            date = f'{order.time.date()}'
+        orders = Order.objects.filter(type__in=['buy', 'not_find_product'],
+                                      pay_status='complite', status='complite')
+        orders = orders.filter(Q(manager=manager) | Q(card_holder_id=manager.id))
+        comission = Comission.objects.get(id=1)
+        manager_comission = comission.manager
+        cardholder_comission = comission.cardholder
+        for order in orders:
+            date = f'{order.time}'
+            manager_money = round(
+                (float(order.total_product_price) - float(order.product_price)) * (manager_comission / 100), 2)
+            cardholder_money = round(
+                (float(order.total_product_price) - float(order.product_price)) * (cardholder_comission / 100), 2)
             if date in list:
-                list[date]['manager'] += round(float(order.total_product_price) * 0.1, 2)
-                list[date]['total'] += round(float(order.total_product_price) * 0.1, 2)
+                if order.manager == manager:
+                    list[date]['manager'] += manager_money
+                    list[date]['total'] += manager_money
+                if order.card_holder_id == str(manager.id):
+                    list[date]['card_holder'] += cardholder_money
+                    list[date]['total'] += cardholder_money
             else:
                 list[date] = {'manager': 0, 'total': 0, 'card_holder': 0}
-                list[date]['manager'] = round(float(order.total_product_price) * 0.1, 2)
-                list[date]['total'] = round(float(order.total_product_price) * 0.1, 2)
-
-        for order in orders_card_holder:
-            date = f'{order.time.date()}'
-            if date in list:
-                list[date]['card_holder'] += round(float(order.total_product_price) * 0.1, 2)
-                list[date]['total'] += round(float(order.total_product_price) * 0.1, 2)
-            else:
-                list[date] = {'manager': 0, 'total': 0, 'card_holder': 0}
-                list[date]['card_holder'] += round(float(order.total_product_price) * 0.1, 2)
-                list[date]['total'] = round(float(order.total_product_price) * 0.1, 2)
+                if order.manager == manager:
+                    list[date]['manager'] += manager_money
+                    list[date]['total'] += manager_money
+                if order.card_holder_id == str(manager.id):
+                    list[date]['card_holder'] += cardholder_money
+                    list[date]['total'] += cardholder_money
         commission_list = []
         for i in list:
             commission_list.append({
@@ -370,10 +406,12 @@ def statistics(request):
         active_users(wb, startdate, enddate)
     if request.POST.get('balance_stat') == 'on':
         balance_stat(wb, startdate, enddate)
-    if request.POST.get('expenses_stats') == 'on':
-        expenses_stats(wb, startdate, enddate)
     if request.POST.get('link_stats') == 'on':
         link_state(wb)
     if request.POST.get('traffic_state') == 'on':
         traffic_state(wb, startdate, enddate)
+    if request.POST.get('fried_state') == 'on':
+        friend_state(wb, startdate, enddate)
+    if request.POST.get('accounting') == 'on':
+        accounting_state(wb, startdate, enddate)
     return wb

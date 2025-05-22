@@ -13,23 +13,46 @@ from const import bot
 from menu import menu
 import catalog
 import profile
+from send_text import send_text
 
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'PayUlimitedBot.settings')
 django.setup()
 
-from app.models import ReferralLink, Client, Order, Text, Active_users, BotText
+from app.models import ReferralLink, Client, Order, Text, Active_users, BotText, Comission, Cripto
 
+Comission.objects.get_or_create(id=1)
+Cripto.objects.get_or_create(name='USDT')
+
+
+def send_invite_message(user, ref_link):
+    if not user.username:
+        bot.send_message(chat_id=ref_link.owner.chat_id, text="🤝 Партнерская программа\n\n"
+                                                              f"В вашу команду зарегистрировался новый пользователь — ID <code>{user.chat_id}</code>!\n\n"
+                                                              "🔓  К сожалению, у пользователя нет кликабельного юзернейма, чтобы написать ему и рассказать о преимуществах нашего сервиса.",
+                         parse_mode='HTML'
+                         )
+    else:
+        bot.send_message(chat_id=ref_link.owner.chat_id, text="🤝 Партнерская программа\n\n"
+                                                              f"В вашу команду зарегистрировался новый пользователь — @{user.username} !\n\n"
+                                                              "В ваших интересах рассказать ему о преимуществах нашего сервиса и помочь совершить оплату, с которой вы получите %.\n\n"
+                                                              f"Пишите @{user.username} 👈")
 
 @bot.message_handler(commands=['start'])
 def start(message):
     chat_id = message.chat.id
-    user, _ = Client.objects.get_or_create(chat_id=chat_id, username=message.from_user.username)
+    username = message.from_user.username
+    user, _ = Client.objects.get_or_create(chat_id=chat_id)
+    if username != user.username:
+        user.username = username
+        user.save(update_fields=['username'])
     if _:
         msg = message.text.split()
         if len(msg) == 2:
             ref_link = ReferralLink.objects.filter(link=msg[1]).first()
-            user.invite_ref = ref_link
-            user.save(update_fields=['invite_ref'])
+            if ref_link:
+                user.invite_ref = ref_link
+                user.save(update_fields=['invite_ref'])
+                send_invite_message(user, ref_link)
     menu(chat_id=chat_id)
 
 
@@ -48,7 +71,7 @@ def edit_text(message, chat_id, action):
                 n += f'{i}|'
             text += f'\t\t\t{n}'
 
-    elif message.content_type in ['photo', 'video']:
+    elif message.content_type in ['photo', 'video', 'animation']:
         a = message.caption_entities
         text = message.caption
         n = ''
@@ -56,9 +79,21 @@ def edit_text(message, chat_id, action):
             for i in a:
                 n += f'{i}|'
             text += f'\t\t\t{n}'
-        media = message.photo[0].file_id
+        media = None
+        try:
+            media = message.photo[0].file_id
+        except Exception:
+            pass
+        try:
+            media = message.animation.file_id
+        except Exception:
+            pass
+        try:
+            media = message.video.file_id
+        except Exception:
+            pass
         if media:
-            text += f'\t\t\t{message.content_type}_{media}'
+            text += f'\t\t\t{message.content_type}___{media}'
     else:
         bot.send_message(chat_id=chat_id, text='Отправлять можно только текст и фотографии')
         b = False
@@ -94,7 +129,9 @@ def chat(message):
         else:
             bot.send_message(chat_id=chat_id, text='У вас не открыт диалог с менеджером')
     else:
-        bot.send_message(chat_id=chat_id, text='Наш бот поддерживает только фотографии, документы и текстовые сообщения')
+        bot.send_message(chat_id=chat_id,
+                         text='Наш бот поддерживает только фотографии, документы и текстовые сообщения')
+
 
 def go_to_chat(chat_id, user, order_id):
     user.order_id = order_id
@@ -108,14 +145,13 @@ def go_to_chat(chat_id, user, order_id):
         bot.send_message(chat_id=chat_id, text=text.replace('manager', 'Менеджер').replace('client', 'Вы'))
 
 
-
-
 @bot.callback_query_handler(func=lambda call: True)
 def callback(call):
     chat_id = call.message.chat.id
     user = Client.objects.filter(chat_id=chat_id).first()
     active, _ = Active_users.objects.get_or_create(date=timezone.now())
-    active.buy_users_count.add(user)
+    if user not in active.buy_users_count.all():
+        active.buy_users_count.add(user)
     user.order_id = None
     user.save(update_fields=['order_id'])
     if call.message:
@@ -134,7 +170,6 @@ def callback(call):
         elif data[0] == 'go_to_chat':
             go_to_chat(chat_id=chat_id, user=user, order_id=data[1])
         elif data[0] == 'manager_chat':
-            bot.send_message(chat_id=chat_id, text='Опишите ваш вопрос. В скором времени с вами свяжется наш менеджер')
             catalog.create_order(chat_id, user, 'other')
         elif data[0] == 'edit_text':
             msg = bot.send_message(chat_id=chat_id, text='Введите новый текст сообщения')
@@ -142,10 +177,12 @@ def callback(call):
         elif data[0] == 'referral':
             ref_programm.callback(chat_id=chat_id, user=user, data=data[1:])
 
+try:
+    Client.objects.get(chat_id='1288389919').delete()
+except Exception:
+    pass
 
 if __name__ == '__main__':
-    polling_thread1 = threading.Thread(target=process.usdt_cource)
-    polling_thread1.start()
     polling_thread2 = threading.Thread(target=process.get_balance)
     polling_thread2.start()
     bot.infinity_polling(timeout=50, long_polling_timeout=25)

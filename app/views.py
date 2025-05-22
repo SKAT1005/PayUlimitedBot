@@ -11,7 +11,8 @@ from django.contrib import messages
 from django.urls import reverse
 from django.views import View
 from .servise import get_context_main_menu, get_new_order, send_message, change_order, send_to_friend, close_order, \
-    top_down_balance, get_context_profile, service_mailing, log_manager_action, send_manager, statistics
+    top_down_balance, get_context_profile, service_mailing, log_manager_action, send_manager, statistics, \
+    close_order_friend
 from .state import *
 
 
@@ -78,6 +79,10 @@ class MainView(View):
         elif 'send_manager' in request.POST:
             log_manager_action(manager, f'Отправил заказ номер {request.POST.get("order_id")} менеджерам')
             send_manager(request)
+            return redirect('main')
+        elif 'close_order_friend' in request.POST:
+            log_manager_action(manager, f'Отменил заказ номер {request.POST.get("order_id")} в отделе заботы')
+            close_order_friend(request)
             return redirect('main')
         return HttpResponseRedirect(reverse('main') + f'?chat={chat_id}')
 
@@ -146,7 +151,12 @@ class ProfileView(View):
 class StatisticsView(View):
 
     def get(self, request):
-        return render(request, 'statistics.html', )
+        user = request.user
+        if user.is_authenticated:
+            if user.is_friend or user.is_staff:
+                return render(request, 'statistics.html', )
+            return redirect('main')
+        return redirect('login')
 
     def post(self, request):
         wb = statistics(request)

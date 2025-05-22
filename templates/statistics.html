@@ -206,7 +206,7 @@
         }
 
 
-.top-bar {
+        .top-bar {
             background: #fff;
             padding: 10px 20px;
             border-bottom: 1px solid #e2e8f0;
@@ -221,7 +221,8 @@
             align-items: center;
             gap: 15px;
         }
-                .button {
+
+        .button {
             /* Сбрасываем дефолтные стили */
             border: none;
             outline: none;
@@ -266,17 +267,18 @@
 
 <!-- Основной блок страницы -->
 <main>
-<div class="top-bar">
-    <div class="top-bar-left">
-        <div class="status-select">
+    <div class="top-bar">
+        <div class="top-bar-left">
+            <div class="status-select">
+            </div>
         </div>
-      </div>
         <div class="top-bar-right">
-        <form method="post", action="{% url 'logout' %}">
-            {% csrf_token %}
-            <button type="submit" id="logout" class="button green">
-                <img height="20px" width="auto" src="https://img.icons8.com/?size=100&id=2445&format=png&color=000000"></img>
-            </button>
+            <form method="post" , action="{% url 'logout' %}">
+                {% csrf_token %}
+                <button type="submit" id="logout" class="button green">
+                    <img height="20px" width="auto"
+                         src="https://img.icons8.com/?size=100&id=2445&format=png&color=000000"></img>
+                </button>
             </form>
         </div>
 
@@ -290,99 +292,117 @@
                 <h2>Выберите пункты для формирования отчёта:</h2>
 
                 <div class="date-range" id="date-range">
-                <label>Период:</label>
-                <input type="date" name="startdate">
-                <input type="date" name="enddate">
-            </div>
+                    <label>Период:</label>
+                    <input type="date" name="startdate">
+                    <input type="date" name="enddate">
+                </div>
+                {% if request.user.is_friend %}
 
-                <!-- 1 -->
-                <div class="stat-item">
-                    <label>
-                        <input type="checkbox" class="toggle-date" name="heart_map">
-                        1 - Тепловая карта клиента
-                    </label>
-                </div>
+                    <div class="stat-item">
+                        <label>
+                            <input type="checkbox" class="toggle-date" name="mailing_stats">
+                            1 - Статистика рассылки
+                        </label>
+                    </div>
+                {% else %}
+                    <!-- 1 -->
+                    <div class="stat-item">
+                        <label>
+                            <input type="checkbox" class="toggle-date" name="heart_map">
+                            1 - Тепловая карта клиента
+                        </label>
+                    </div>
 
-                <!-- 2 -->
-                <div class="stat-item">
-                    <label>
-                        <input type="checkbox" class="toggle-date" name="revenue_structure">
-                        2 - Структура выручки
-                    </label>
-                </div>
+                    <!-- 2 -->
+                    <div class="stat-item">
+                        <label>
+                            <input type="checkbox" class="toggle-date" name="revenue_structure">
+                            2 - Структура выручки
+                        </label>
+                    </div>
 
-                <!-- 3 -->
-                <div class="stat-item">
-                    <label>
-                        <input type="checkbox" class="toggle-date" name="statistics_for_each_service">
-                        3 - Статистика по каждому сервису
-                    </label>
-                </div>
+                    <!-- 3 -->
+                    <div class="stat-item">
+                        <label>
+                            <input type="checkbox" class="toggle-date" name="statistics_for_each_service">
+                            3 - Статистика по каждому сервису
+                        </label>
+                    </div>
 
-                <!-- 4 -->
-                <div class="stat-item">
-                    <label>
-                        <input type="checkbox" class="toggle-date" name="deal_stats">
-                        4 - Статистика по сделкам
-                    </label>
-                </div>
+                    <!-- 4 -->
+                    <div class="stat-item">
+                        <label>
+                            <input type="checkbox" class="toggle-date" name="deal_stats">
+                            4 - Статистика по сделкам
+                        </label>
+                    </div>
 
-                <!-- 5 -->
-                <div class="stat-item">
-                    <label>
-                        <input type="checkbox" class="toggle-date" name="mailing_stats">
-                        5 - Статистика рассылки
-                    </label>
-                </div>
+                    <!-- 5 -->
+                    <div class="stat-item">
+                        <label>
+                            <input type="checkbox" class="toggle-date" name="mailing_stats">
+                            5 - Статистика рассылки
+                        </label>
+                    </div>
 
-                <!-- 6 -->
-                <div class="stat-item">
-                    <label>
-                        <input type="checkbox" class="toggle-date" name="conversion">
-                        6 - Конверсия
-                    </label>
-                </div>
+                    <!-- 6 -->
+                    <div class="stat-item">
+                        <label>
+                            <input type="checkbox" class="toggle-date" name="conversion">
+                            6 - Конверсия
+                        </label>
+                    </div>
 
-                <!-- 7 -->
-                <div class="stat-item">
-                    <label>
-                        <input type="checkbox" class="toggle-date" name="active_users">
-                        7 - Количество активных пользователей
-                    </label>
-                </div>
+                    <!-- 7 -->
+                    <div class="stat-item">
+                        <label>
+                            <input type="checkbox" class="toggle-date" name="active_users">
+                            7 - Количество активных пользователей
+                        </label>
+                    </div>
 
-                <!-- 8 -->
-                <div class="stat-item">
-                    <label>
-                        <input type="checkbox" class="toggle-date" name="balance_stat">
-                        8 - Статистика балансов
-                    </label>
-                </div>
+                    <!-- 8 -->
+                    <div class="stat-item">
+                        <label>
+                            <input type="checkbox" class="toggle-date" name="balance_stat">
+                            8 - Статистика балансов
+                        </label>
+                    </div>
 
-                <!-- 9 -->
-                <div class="stat-item">
-                    <label>
-                        <input type="checkbox" class="toggle-date" name="expenses_stats">
-                        9 - Статистика расходов
-                    </label>
-                </div>
-                <div class="stat-item">
-                    <label>
-                        <input type="checkbox" class="toggle-date" name="link_stats">
-                        10 - Статистика ссылок
-                    </label>
-                </div>
-                <div class="stat-item">
-                    <label>
-                        <input type="checkbox" class="toggle-date" name="traffic_state">
-                        11 - Источники трафика
-                    </label>
-                </div>
+                    <div class="stat-item">
+                        <label>
+                            <input type="checkbox" class="toggle-date" name="link_stats">
+                            9 - Статистика ссылок
+                        </label>
+                    </div>
+
+                    <div class="stat-item">
+                        <label>
+                            <input type="checkbox" class="toggle-date" name="traffic_state">
+                            10 - Источники трафика
+                        </label>
+                    </div>
+
+                    <div class="stat-item">
+                        <label>
+                            <input type="checkbox" class="toggle-date" name="fried_state">
+                            11 - Статистика МОЗ
+                        </label>
+                    </div>
+
+                    <div class="stat-item">
+                        <label>
+                            <input type="checkbox" class="toggle-date" name="accounting">
+                            12 - Бухгалтерия
+                        </label>
+                    </div>
+                {% endif %}
 
                 <!-- Кнопка для формирования Excel-файла -->
                 <button class="generate-excel-btn" type="submit">Сформировать Excel</button>
             </div>
         </form>
+    </div>
 </main>
 
 </body>
