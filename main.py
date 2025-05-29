@@ -1,10 +1,13 @@
+import base64
 import os
 import threading
+from io import BytesIO
 
 import django
 import openpyxl
 from django.utils import timezone
 from django.utils.translation.trans_real import catalog
+from telebot import types
 
 import payment
 import process
@@ -120,10 +123,10 @@ def chat(message):
                 Text.objects.create(order=order, text=message.text, sender='client')
             elif message.content_type == 'photo':
                 file_id = message.photo[-1].file_id
-                Text.objects.create(order=order, file_id=file_id, is_photo=True, is_text=False, sender='client')
+                Text.objects.create(order=order, file_id=file_id, is_photo=True, is_text=False, sender='client', text=message.caption)
             else:
                 file_id = message.document.file_id
-                Text.objects.create(order=order, file_id=file_id, is_pdf=True, is_text=False, sender='client')
+                Text.objects.create(order=order, file_id=file_id, is_pdf=True, is_text=False, sender='client', text=message.caption)
             order.have_new_message = True
             order.save(update_fields=['have_new_message'])
         else:
@@ -132,15 +135,26 @@ def chat(message):
         bot.send_message(chat_id=chat_id,
                          text='Наш бот поддерживает только фотографии, документы и текстовые сообщения')
 
+def add_media(medias, message):
+    if message.is_pdf:
+        medias.append(types.InputMediaDocument(media=BytesIO(base64.b64decode(message.base64_file))))
+    else:
+        medias.append(types.InputMediaPhoto(media=BytesIO(base64.b64decode(message.base64_file))))
 
 def go_to_chat(chat_id, user, order_id):
     user.order_id = order_id
     user.save(update_fields=['order_id'])
     order = Order.objects.get(id=order_id)
     text = ''
+    medias = []
     for message in order.texts.all():
+        if message.is_pdf or message.is_photo:
+            add_media(medias=medias, message=message)
+        message.is_read = True
+        message.save(update_fields='is_read')
         if message.is_text:
             text += f'{message.sender}: {message.text}\n'
+
     if text:
         bot.send_message(chat_id=chat_id, text=text.replace('manager', 'Менеджер').replace('client', 'Вы'))
 
@@ -152,8 +166,6 @@ def callback(call):
     active, _ = Active_users.objects.get_or_create(date=timezone.now())
     if user not in active.buy_users_count.all():
         active.buy_users_count.add(user)
-    user.order_id = None
-    user.save(update_fields=['order_id'])
     if call.message:
         data = call.data.split('|')
         bot.clear_step_handler_by_chat_id(chat_id=chat_id)
@@ -177,10 +189,7 @@ def callback(call):
         elif data[0] == 'referral':
             ref_programm.callback(chat_id=chat_id, user=user, data=data[1:])
 
-try:
-    Client.objects.get(chat_id='1288389919').delete()
-except Exception:
-    pass
+Order.objects.all().delete()
 
 if __name__ == '__main__':
     polling_thread2 = threading.Thread(target=process.get_balance)

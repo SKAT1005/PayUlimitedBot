@@ -462,6 +462,33 @@
             background: #1abc9c;
         }
 
+        .message-footer {
+            display: flex;
+            justify-content: flex-end;
+            align-items: center;
+            margin-top: 6px;
+            font-size: 0.75em;
+            color: #888;
+            gap: 6px;
+        }
+
+        .icon-check {
+            width: 16px;
+            height: 16px;
+            fill: #4caf50; /* зеленый для прочитанного */
+        }
+
+        .icon-check.unread {
+            fill: #888; /* серый — для непрочитанного */
+        }
+
+        .file-upload-label {
+            cursor: pointer;
+            font-size: 20px;
+            margin-right: 10px;
+            user-select: none;
+        }
+
 
     </style>
 
@@ -530,68 +557,198 @@
         </div>
         {% if chat %}
             <div class="chat">
-            <div class="message-area">
-                {% for history in  order_history %}
-                    <div class="deal-info">
-                        <div class="deal-date">Дата сделки: {{ history.time }}</div>
-                        <div class="deal-product">Товар: {{ history.name }}</div>
-                    </div>
-                    {% for text in history.texts.all %}
-                        {% if text.sender == 'client' %}
+                <div class="message-area">
+                    {% for history in  order_history %}
+                        <div class="deal-info">
+                            <div class="deal-date">Дата сделки: {{ history.time }}</div>
+                            <div class="deal-product">Товар: {{ history.name }}</div>
+                        </div>
+                        {% for text in history.texts.all %}
+                            {% if text.sender == 'client' %}
                             {% if text.is_text %}
-                                <div class="message user">{{ text.text }}</div>
+                                <div class="message user">
+                                    {{ text.text }}
+                                    <div class="message-footer">
+                                        <time>{{ text.time|date:"H:i" }}</time>
+                                    </div>
+                                </div>
+
                             {% elif text.is_photo %}
-                                <img src="data:image/png;base64,{{ text.get_data }}" style="width:250px;height:auto;"
-                                     alt="Фото 1">
+                                <div class="message user">
+                                    <img src="data:image/png;base64,{{ text.get_data }}"
+                                         style="width:250px;height:auto;"
+                                         alt="Фото 1">
+                                    {{ text.text }}
+                                    <div class="message-footer">
+                                        <time>{{ text.time|date:"H:i" }}</time>
+                                    </div>
+                                </div>
                             {% elif text.is_pdf %}
-                                <a href="data:application/pdf;base64,{{ tet.get_data }}" download="document.pdf"
-                                   title="Скачать PDF">
-                                    <img src="https://tk-lider.ru/images/banner_png.png" alt="PDF Icon"
-                                         style="width:50px;height:auto;">
-                                    <br>Скачать PDF
-                                </a>
+                                <div class="message user">
+                                    <a href="data:application/pdf;base64,{{ text.get_data }}" download="document.pdf"
+                                       title="Скачать PDF">
+                                        <img src="https://tk-lider.ru/images/banner_png.png" alt="PDF Icon"
+                                             style="width:50px;height:auto;">
+                                        <br>Скачать PDF
+                                    </a>
+                                    {{ text.text }}
+                                    <div class="message-footer">
+                                        <time>{{ text.time|date:"H:i" }}</time>
+                                    </div>
+                                </div>
                             {% endif %}
                         {% elif text.sender == 'manager' %}
-                            <div class="message admin">{{ text.text }}</div>
+                            {% if text.is_text %}
+                                <div class="message admin">
+                                    {{ text.text }}
+                                    <div class="message-footer">
+                                        <time>{{ text.time|date:"H:i" }}</time>
+                                    </div>
+                                </div>
+
+                            {% elif text.is_photo %}
+                                <div class="message admin">
+                                    <img src="data:image/png;base64,{{ text.get_data }}"
+                                         style="width:250px;height:auto;"
+                                         alt="Фото 1">
+                                    {{ text.text }}
+                                    <div class="message-footer">
+                                        <time>{{ text.time|date:"H:i" }}</time>
+                                    </div>
+                                </div>
+                            {% elif text.is_pdf %}
+                                <div class="message admin">
+                                    <a href="data:application/pdf;base64,{{ text.get_data }}" download="document.pdf"
+                                       title="Скачать PDF">
+                                        <img src="https://tk-lider.ru/images/banner_png.png" alt="PDF Icon"
+                                             style="width:50px;height:auto;">
+                                        <br>Скачать PDF
+                                    </a>
+                                    {{ text.text }}
+                                    <div class="message-footer">
+                                        <time>{{ text.time|date:"H:i" }}</time>
+                                    </div>
+                                </div>
+                            {% endif %}
+
+                        {% endif %}
+                        {% endfor %}
+                        <hr class="deal-separator">
+                    {% endfor %}
+
+                    <div class="deal-info">
+                        <div class="deal-date">Текущая сделка</div>
+                    </div>
+                    {% for text in chat.texts.all %}
+                        {% if text.sender == 'client' %}
+                            {% if text.is_text %}
+                                <div class="message user">
+                                    {{ text.text }}
+                                    <div class="message-footer">
+                                        <time>{{ text.time|date:"H:i" }}</time>
+                                    </div>
+                                </div>
+
+                            {% elif text.is_photo %}
+                                <div class="message user">
+                                    <img src="data:image/png;base64,{{ text.get_data }}"
+                                         style="width:250px;height:auto;"
+                                         alt="Фото 1">
+                                    {{ text.text }}
+                                    <div class="message-footer">
+                                        <time>{{ text.time|date:"H:i" }}</time>
+                                    </div>
+                                </div>
+                            {% elif text.is_pdf %}
+                                <div class="message user">
+                                    <a href="data:application/pdf;base64,{{ text.get_data }}" download="document.pdf"
+                                       title="Скачать PDF">
+                                        <img src="https://tk-lider.ru/images/banner_png.png" alt="PDF Icon"
+                                             style="width:50px;height:auto;">
+                                        <br>Скачать PDF
+                                    </a>
+                                    {{ text.text }}
+                                    <div class="message-footer">
+                                        <time>{{ text.time|date:"H:i" }}</time>
+                                    </div>
+                                </div>
+                            {% endif %}
+                        {% elif text.sender == 'manager' %}
+                            {% if text.is_text %}
+                                <div class="message admin">
+                                    {{ text.text }}
+                                    <div class="message-footer">
+                                        <time>{{ text.time|date:"H:i" }}</time>
+                                        {% if text.is_read %}
+    <svg class="icon-check" viewBox="0 0 24 24" aria-hidden="true">
+        <path d="M20.285 6.709l-11.39 11.39-5.66-5.66 1.414-1.414 4.246 4.246 9.976-9.976z"/>
+    </svg>
+{% else %}
+    <svg class="icon-check unread" viewBox="0 0 24 24" aria-hidden="true">
+        <path d="M20.285 6.709l-11.39 11.39-5.66-5.66 1.414-1.414 4.246 4.246 9.976-9.976z"/>
+    </svg>
+{% endif %}
+                                    </div>
+                                </div>
+
+                            {% elif text.is_photo %}
+                                <div class="message admin">
+                                    <img src="data:image/png;base64,{{ text.get_data }}"
+                                         style="width:250px;height:auto;"
+                                         alt="Фото 1">
+                                    {{ text.text }}
+                                    <div class="message-footer">
+                                        <time>{{ text.time|date:"H:i" }}</time>
+                                        {% if text.is_read %}
+    <svg class="icon-check" viewBox="0 0 24 24" aria-hidden="true">
+        <path d="M20.285 6.709l-11.39 11.39-5.66-5.66 1.414-1.414 4.246 4.246 9.976-9.976z"/>
+    </svg>
+{% else %}
+    <svg class="icon-check unread" viewBox="0 0 24 24" aria-hidden="true">
+        <path d="M20.285 6.709l-11.39 11.39-5.66-5.66 1.414-1.414 4.246 4.246 9.976-9.976z"/>
+    </svg>
+{% endif %}
+                                    </div>
+                                </div>
+                            {% elif text.is_pdf %}
+                                <div class="message admin">
+                                    <a href="data:application/pdf;base64,{{ text.get_data }}" download="document.pdf"
+                                       title="Скачать PDF">
+                                        <img src="https://tk-lider.ru/images/banner_png.png" alt="PDF Icon"
+                                             style="width:50px;height:auto;">
+                                        <br>Скачать PDF
+                                    </a>
+                                    {{ text.text }}
+                                    <div class="message-footer">
+                                        <time>{{ text.time|date:"H:i" }}</time>
+                                        {% if text.is_read %}
+    <svg class="icon-check" viewBox="0 0 24 24" aria-hidden="true">
+        <path d="M20.285 6.709l-11.39 11.39-5.66-5.66 1.414-1.414 4.246 4.246 9.976-9.976z"/>
+    </svg>
+{% else %}
+    <svg class="icon-check unread" viewBox="0 0 24 24" aria-hidden="true">
+        <path d="M20.285 6.709l-11.39 11.39-5.66-5.66 1.414-1.414 4.246 4.246 9.976-9.976z"/>
+    </svg>
+{% endif %}
+                                    </div>
+                                </div>
+                            {% endif %}
+
                         {% endif %}
                     {% endfor %}
-                    <hr class="deal-separator">
-                {% endfor %}
-
-                <div class="deal-info">
-                    <div class="deal-date">Текущая сделка</div>
-                </div>
-                {% for text in chat.texts.all %}
-                    {% if text.sender == 'client' %}
-                        {% if text.is_text %}
-                            <div class="message user">{{ text.text }}</div>
-                        {% elif text.is_photo %}
-                            <div class="message user">
-                                <img src="data:image/png;base64,{{ text.get_data }}" style="width:250px;height:auto;"
-                                     alt="Фото 1">
-                            </div>
-                        {% elif text.is_pdf %}
-                            <div class="message user">
-                                <a href="data:application/pdf;base64,{{ text.get_data }}" download="document.pdf"
-                                   title="Скачать PDF">
-                                    <img src="https://tk-lider.ru/images/banner_png.png" alt="PDF Icon"
-                                         style="width:50px;height:auto;">
-                                    <br>Скачать PDF
-                                </a>
-                            </div>
-                        {% endif %}
-                    {% elif text.sender == 'manager' %}
-                        <div class="message admin">{{ text.text }}</div>
-                    {% endif %}
-                {% endfor %}
                 </div>
                 <div class="chat-input">
-                    <form method="post">
+                    <form method="post" id="chatForm" enctype="multipart/form-data">
                         {% csrf_token %}
-                        <input type="hidden" name="order_id" value={{ chat.id }}>
-                        <textarea type="text" name="text" placeholder="Введите сообщение"></textarea>
-                        <br>
-                        <button type="submit" name="send_message">Отправить</button>
+                        <input type="hidden" name="order_id" value="{{ chat.id }}">
+
+                        <textarea name="text" placeholder="Введите сообщение" id="chatTextarea"></textarea>
+
+                        <input type="file" name="file" multiple/>
+                        <input type="hidden" name="send_message" id="sendMessageInput" value="">
+
+
+                        <button type="submit" name="send_message" value="1">Отправить</button>
                     </form>
                 </div>
             </div>
@@ -859,10 +1016,18 @@
                 </form>
             {% endif %}
         {% endif %}
-        </div>
+    </div>
 </main>
 
 <script>
+    document.getElementById('chatTextarea').addEventListener('keydown', function (e) {
+        if (e.key === 'Enter' && !e.shiftKey) {
+            e.preventDefault();  // отменяем переход на новую строку
+            document.getElementById('chatForm').submit();
+        }
+    });
+
+
     const messageArea = document.querySelector('.message-area');
     if (messageArea) {
         messageArea.scrollTop = messageArea.scrollHeight;

@@ -1,5 +1,6 @@
 import datetime
 import decimal
+from io import BytesIO
 
 import openpyxl
 from django.http import HttpResponse
@@ -80,10 +81,24 @@ def send_manager(request):
 def send_message(request):
     chat_id = request.POST.get('order_id')
     text = request.POST.get('text')
-    if text:
+    if text or 'file' in request.FILES:
         order = Order.objects.get(id=chat_id)
         client = order.client
-        Text.objects.create(sender='manager', text=text, order=order)
+        is_text = True
+        photo = False
+        pdf = False
+        base_64 = None
+        if 'file' in request.FILES:
+            is_text = False
+            file = request.FILES.getlist('file')[0]
+            base_64 = base64.b64encode(file.file.read()).decode('utf-8')
+            file_stream = BytesIO(base64.b64decode(base_64))
+            if 'image' in file.content_type:
+                photo = True
+            else:
+                pdf = True
+                file_stream.name = file.name
+        txt = Text.objects.create(sender='manager', text=text, is_read=False, is_photo=photo, is_pdf=pdf, is_text=is_text, base64_file=base_64, order=order)
         if request.user.is_friend:
             mailing = IndividualMailing.objects.filter(client=client).last()
             if (mailing and (mailing.time + timedelta(days=3) < timezone.now() or mailing.is_buy)) or not mailing:
@@ -92,9 +107,16 @@ def send_message(request):
                     client=client
                 )
         if client.order_id == str(order.id):
+            txt.is_read = True
+            txt.save(update_fields=['is_read'])
             try:
-                bot.send_message(chat_id=order.client.chat_id, text=text)
-            except Exception:
+                if photo:
+                    bot.send_photo(chat_id=order.client.chat_id, photo=file_stream, caption=text)
+                elif pdf:
+                    bot.send_document(chat_id=order.client.chat_id, document=file_stream, caption=text)
+                else:
+                    bot.send_message(chat_id=order.client.chat_id, text=text)
+            except Exception as e:
                 pass
         else:
             try:

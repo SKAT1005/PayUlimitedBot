@@ -189,6 +189,7 @@ class Text(models.Model):
     base64_file = models.TextField(blank=True, null=True, verbose_name='Файл в формате base64')
     time = models.DateTimeField(auto_now_add=True, verbose_name='Дата сообщения')
     sender = models.CharField(max_length=10, choices=SENDER_CHOISE, verbose_name='Отправитель')
+    is_read = models.BooleanField(default=True, verbose_name='Прочитано ли сообщение')
 
     def get_data(self):
         if not self.base64_file:

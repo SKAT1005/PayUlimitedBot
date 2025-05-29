@@ -1,5 +1,6 @@
 import buttons
-from app.models import Products, Order
+import menu
+from app.models import Products, Order, Text
 from const import bot
 from send_text import send_text
 
@@ -27,11 +28,28 @@ def prod_detail(chat_id, prod_id, page):
     bot.send_message(chat_id=chat_id, text=text, reply_markup=buttons.prod_detail(page=page, prod_id=prod_id))
 
 
-def create_order(chat_id, user, type):
+def create_order_continue(message, chat_id, user, type):
+    if message.content_type == 'text' and message.text == '/start':
+        menu.menu(chat_id=chat_id)
     order = Order.objects.create(client=user, type=type, status='wait_manager')
     user.order_id = order.id
     user.save(update_fields=['order_id'])
-    send_text('create_order', chat_id)
+    if message.content_type == 'text':
+        Text.objects.create(order=order, text=message.text, sender='client')
+    elif message.content_type == 'photo':
+        file_id = message.photo[-1].file_id
+        Text.objects.create(order=order, file_id=file_id, is_photo=True, is_text=False, sender='client')
+    else:
+        file_id = message.document.file_id
+        Text.objects.create(order=order, file_id=file_id, is_pdf=True, is_text=False, sender='client')
+
+def create_order(chat_id, user, type):
+    order = Order.objects.filter(client=user).last()
+    if not order or (order and order.status in ['wait_account_approve', 'complite', 'chat_with_friend']):
+        msg = send_text('create_order', chat_id)
+        bot.register_next_step_handler(msg, create_order_continue, chat_id, user, type)
+    else:
+        send_text('order_is_create', chat_id, buttons.go_to_menu())
 
 def callback(data, user, chat_id):
     if data[0] == 'all':
