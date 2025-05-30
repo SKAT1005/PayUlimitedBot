@@ -2,6 +2,7 @@ import base64
 
 from django.contrib.auth.models import AbstractUser, Group, Permission, PermissionsMixin
 from django.db import models
+from django.utils import timezone
 
 from const import bot
 
@@ -19,6 +20,7 @@ class Client(models.Model):
     stay_old = models.DateField(blank=True, null=True, verbose_name='Когда стал старым клиентом')
     invite_ref = models.ForeignKey('ReferralLink', blank=True, null=True, on_delete=models.SET_NULL, related_name='usr',
                                    verbose_name='Ссылка-приглашения')
+    last_action = models.DateTimeField(default=timezone.now, verbose_name='Время последгнего действия')
     comment = models.TextField(default='', blank=True, null=True, verbose_name='Комментарий по клиенту')
     balance = models.DecimalField(default=0, max_digits=100, decimal_places=2, verbose_name='Баланс клиента')
     referral_status = models.CharField(max_length=128, default='start', choices=REF_STATUS)
@@ -158,6 +160,8 @@ class Order(models.Model):
     close_time = models.DateField(blank=True, null=True, verbose_name='Время завершения заказа')
     have_new_message = models.BooleanField(default=False, verbose_name='Есть ли новое сообщение?')
     last_message_time = models.DateTimeField(blank=True, null=True, verbose_name='Время последнего сообщения')
+    description = models.CharField(max_length=256, blank=True, null=True, verbose_name='Описание сделки')
+    is_pin = models.BooleanField(default=False, verbose_name='Закреплено ли сообщение')
 
     def date_str(self):
         month = self.date.month

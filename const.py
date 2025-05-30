@@ -2,4 +2,4 @@
 from telebot import TeleBot
 
 
-bot = TeleBot('7195501588:AAGMB-5sq3gSjHbfz5z_fYgv2npWYA1uGsI')
+bot = TeleBot('8103832415:AAHvCk8v4r6utEoeyqdAGq8-bi1HfrzbIWY')

@@ -12,7 +12,7 @@ from django.urls import reverse
 from django.views import View
 from .servise import get_context_main_menu, get_new_order, send_message, change_order, send_to_friend, close_order, \
     top_down_balance, get_context_profile, service_mailing, log_manager_action, send_manager, statistics, \
-    close_order_friend
+    close_order_friend, pin, save_description
 from .state import *
 
 
@@ -84,6 +84,10 @@ class MainView(View):
             log_manager_action(manager, f'Отменил заказ номер {request.POST.get("order_id")} в отделе заботы')
             close_order_friend(request)
             return redirect('main')
+        elif 'pin' in request.POST:
+            pin(request)
+        elif 'save_description' in request.POST:
+            save_description(request)
         return HttpResponseRedirect(reverse('main') + f'?chat={chat_id}')
 
 

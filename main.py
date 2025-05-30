@@ -45,6 +45,7 @@ def start(message):
     chat_id = message.chat.id
     username = message.from_user.username
     user, _ = Client.objects.get_or_create(chat_id=chat_id)
+    update_last_actions(user)
     if username != user.username:
         user.username = username
         user.save(update_fields=['username'])
@@ -112,6 +113,7 @@ def chat(message):
     chat_id = message.chat.id
     if message.content_type in ['text', 'photo', 'document']:
         client = Client.objects.get(chat_id=chat_id)
+        update_last_actions(client)
         if client.order_id:
             order = Order.objects.get(id=client.order_id)
             order.last_message_time = timezone.now()
@@ -158,11 +160,18 @@ def go_to_chat(chat_id, user, order_id):
     if text:
         bot.send_message(chat_id=chat_id, text=text.replace('manager', 'Менеджер').replace('client', 'Вы'))
 
+def update_last_actions(user):
+    user.last_action = timezone.now()
+    user.save(update_fields=['last_action'])
+    order = Order.objects.filter(client=user).last()
+    if order:
+        Text.objects.filter(order=order, is_read=False).update(is_read=True)
 
 @bot.callback_query_handler(func=lambda call: True)
 def callback(call):
     chat_id = call.message.chat.id
     user = Client.objects.filter(chat_id=chat_id).first()
+    update_last_actions(user)
     active, _ = Active_users.objects.get_or_create(date=timezone.now())
     if user not in active.buy_users_count.all():
         active.buy_users_count.add(user)

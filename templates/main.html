@@ -147,11 +147,11 @@
         }
 
         .chat-list li {
-            padding: 10px 15px;
-            cursor: pointer;
-            transition: background .3s;
-            font-size: 14px;
+            padding: 12px 15px;
             border-bottom: 1px solid #f0f0f0;
+            font-size: 14px;
+            background: #fff;
+            transition: background-color 0.3s;
         }
 
         .chat-list li:hover {
@@ -160,12 +160,103 @@
 
         .chat-list li.active {
             background: #e6fffa;
+            font-weight: 600;
+        }
+
+        .chat-list li.pinned {
+            border-left: 4px solid #00aaff;
+            background: #f0fcff;
+        }
+
+        .chat-link {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            text-decoration: none;
+            color: #333;
+            margin-bottom: 8px;
+        }
+
+        .chat-info {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .chat-title {
+            font-weight: 500;
+        }
+
+        .chat-date {
+            font-size: 12px;
+            color: #888;
+        }
+
+        .unread-icon {
+            flex-shrink: 0;
+        }
+
+        .description-form {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+        }
+
+        .description-input {
+            flex: 1;
+            padding: 6px 8px;
+            font-size: 13px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            transition: border-color 0.3s;
+        }
+
+        .description-input:focus {
+            border-color: #00aaff;
+            outline: none;
+        }
+
+        .save-btn {
+            background-color: #00aaff;
+            border: none;
+            color: white;
+            padding: 6px 12px;
+            font-size: 13px;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+
+        .save-btn:hover {
+            background-color: #008ecc;
+        }
+
+        .pin-btn {
+            background: transparent;
+            border: none;
+            cursor: pointer;
+            padding: 4px;
+            display: flex;
+            align-items: center;
+            transition: transform 0.2s;
+        }
+
+        .pin-btn:hover {
+            transform: scale(1.2);
+        }
+
+        .pin-btn svg path {
+            stroke: #555;
+        }
+
+        li.pinned .pin-btn svg path {
+            fill: #00aaff;
         }
 
         .chat {
             flex: 1;
             display: flex;
-            width: 75%;
+            width: 100%;
             flex-direction: column;
             background: #fff;
             border-right: 1px solid #e2e8f0;
@@ -179,7 +270,7 @@
             display: flex;
             flex-direction: column;
             gap: 10px;
-            max-width: 40%;
+            max-width: 80%;
         }
 
         .deal-info {
@@ -212,12 +303,14 @@
         .message.user {
             background: #e2f7e6;
             margin-right: auto;
+            white-space: pre-line;
         }
 
         /* Сообщения от админа справа */
         .message.admin {
             background: #e2e6f7;
             margin-left: auto;
+            white-space: pre-line;
         }
 
         hr.deal-separator {
@@ -482,14 +575,35 @@
             fill: #888; /* серый — для непрочитанного */
         }
 
-        .file-upload-label {
-            cursor: pointer;
-            font-size: 20px;
-            margin-right: 10px;
-            user-select: none;
-        }
 
 
+        .modal {
+    display: none; /* Скрыто по умолчанию */
+    position: fixed;
+    z-index: 1000;
+    left: 0; top: 0;
+    width: 100%; height: 100%;
+    overflow: auto;
+    background-color: rgba(0,0,0,0.8);
+  }
+
+  .modal-content {
+    margin: 5% auto;
+    display: block;
+    max-width: 90%;
+    max-height: 80%;
+    border-radius: 4px;
+  }
+
+  .modal-close {
+    position: absolute;
+    top: 20px;
+    right: 35px;
+    color: #fff;
+    font-size: 40px;
+    font-weight: bold;
+    cursor: pointer;
+  }
     </style>
 
 </head>
@@ -503,6 +617,10 @@
         <li><a href="{% url 'profile' %}">Мой профиль </a></li>
     </ul>
 </aside>
+<div id="modal" class="modal">
+  <span class="modal-close" id="modalClose">&times;</span>
+  <img class="modal-content" id="modalImage" src="" alt="Увеличенное фото">
+</div>
 <main>
     <div class="top-bar">
         <div class="top-bar-left">
@@ -539,17 +657,41 @@
             <div class="chat-list-scroll">
                 <ul>
                     {% for chat in manager_chats %}
-                        <li>
-                            <a href="{% url 'main' %}?chat={{ chat.id }}">
-                                Чат {{ chat.id }} {% if chat.date %}
-                                {% if request.user.is_friend %}{{ chat.date }} {% endif %} {% endif %}
+                        <li class="{% if chat.is_pinned %}pinned{% endif %} {% if chat.id == current_chat_id %}active{% endif %}">
+                            <a href="{% url 'main' %}?chat={{ chat.id }}" class="chat-link">
+                                <div class="chat-info">
+                                    <span class="chat-title">Чат {{ chat.id }}</span>
+                                    {% if chat.date and request.user.is_friend %}
+                                        <span class="chat-date">{{ chat.date }}</span>
+                                    {% endif %}
+                                </div>
                                 {% if chat.have_new_message %}
                                     <svg class="unread-icon" width="14" height="14" viewBox="0 0 14 14" fill="none"
-                                         xmlns="http://www.w3.org/2000/svg">
+                                         xmlns="http://www.w3.org/2000/svg" aria-label="Новое сообщение">
                                         <circle cx="7" cy="7" r="6" fill="blue"/>
                                     </svg>
                                 {% endif %}
+                            <form method="post">
+                                {% csrf_token %}
+                                <input type="hidden" name="order_id" value="{{ chat.id }}">
+                                <button type="submit" class="pin-btn" data-chat-id="{{ chat.id }}" name="pin" title="Закрепить чат"
+                                        aria-label="Закрепить чат">
+                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none"
+                                         xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                                        <path d="M18.364 5.636a3 3 0 0 0-4.242 0l-7.071 7.071a1 1 0 0 0 0 1.414l3.536 3.536a1 1 0 0 0 1.414 0l7.071-7.071a3 3 0 0 0 0-4.242zm-9.9 9.9-1.414-1.414 5.657-5.657 1.414 1.414-5.657 5.657z"
+                                              fill="#555"/>
+                                    </svg>
+                                </button>
+                            </form>
                             </a>
+
+                            <form method="post" class="description-form">
+                                <input type="hidden" name="order_id" value="{{ chat.id }}">
+                                {% csrf_token %}
+                                <input name="description" placeholder="Информация о сделке"
+                                       value="{{ chat.description|default_if_none:'' }}" class="description-input">
+                                <button type="submit" class="save-btn" name="save_description">Сохранить</button>
+                            </form>
                         </li>
                     {% endfor %}
                 </ul>
@@ -565,73 +707,77 @@
                         </div>
                         {% for text in history.texts.all %}
                             {% if text.sender == 'client' %}
-                            {% if text.is_text %}
-                                <div class="message user">
-                                    {{ text.text }}
-                                    <div class="message-footer">
-                                        <time>{{ text.time|date:"H:i" }}</time>
+                                {% if text.is_text %}
+                                    <div class="message user">
+                                        {{ text.text }}
+                                        <div class="message-footer">
+                                            <time>{{ text.time|date:"H:i" }}</time>
+                                        </div>
                                     </div>
-                                </div>
 
-                            {% elif text.is_photo %}
-                                <div class="message user">
-                                    <img src="data:image/png;base64,{{ text.get_data }}"
-                                         style="width:250px;height:auto;"
-                                         alt="Фото 1">
-                                    {{ text.text }}
-                                    <div class="message-footer">
-                                        <time>{{ text.time|date:"H:i" }}</time>
+                                {% elif text.is_photo %}
+                                    <div class="message user">
+                                        <img class="thumbnail" src="data:image/png;base64,{{ text.get_data }}"
+                 style="width:250px;height:auto;cursor:pointer;"
+                 alt="Фото 1" title="Нажмите для увеличения"
+                 data-full="data:image/png;base64,{{ text.get_data }}">
+                                        {{ text.text }}
+                                        <div class="message-footer">
+                                            <time>{{ text.time|date:"H:i" }}</time>
+                                        </div>
                                     </div>
-                                </div>
-                            {% elif text.is_pdf %}
-                                <div class="message user">
-                                    <a href="data:application/pdf;base64,{{ text.get_data }}" download="document.pdf"
-                                       title="Скачать PDF">
-                                        <img src="https://tk-lider.ru/images/banner_png.png" alt="PDF Icon"
-                                             style="width:50px;height:auto;">
-                                        <br>Скачать PDF
-                                    </a>
-                                    {{ text.text }}
-                                    <div class="message-footer">
-                                        <time>{{ text.time|date:"H:i" }}</time>
+                                {% elif text.is_pdf %}
+                                    <div class="message user">
+                                        <a href="data:application/pdf;base64,{{ text.get_data }}"
+                                           download="document.pdf"
+                                           title="Скачать PDF">
+                                            <img src="https://tk-lider.ru/images/banner_png.png" alt="PDF Icon"
+                                                 style="width:50px;height:auto;">
+                                            <br>Скачать PDF
+                                        </a>
+                                        {{ text.text }}
+                                        <div class="message-footer">
+                                            <time>{{ text.time|date:"H:i" }}</time>
+                                        </div>
                                     </div>
-                                </div>
+                                {% endif %}
+                            {% elif text.sender == 'manager' %}
+                                {% if text.is_text %}
+                                    <div class="message admin">
+                                        {{ text.text }}
+                                        <div class="message-footer">
+                                            <time>{{ text.time|date:"H:i" }}</time>
+                                        </div>
+                                    </div>
+
+                                {% elif text.is_photo %}
+                                    <div class="message admin">
+                                        <img class="thumbnail" src="data:image/png;base64,{{ text.get_data }}"
+                 style="width:250px;height:auto;cursor:pointer;"
+                 alt="Фото 1" title="Нажмите для увеличения"
+                 data-full="data:image/png;base64,{{ text.get_data }}">
+                                        {{ text.text }}
+                                        <div class="message-footer">
+                                            <time>{{ text.time|date:"H:i" }}</time>
+                                        </div>
+                                    </div>
+                                {% elif text.is_pdf %}
+                                    <div class="message admin">
+                                        <a href="data:application/pdf;base64,{{ text.get_data }}"
+                                           download="document.pdf"
+                                           title="Скачать PDF">
+                                            <img src="https://tk-lider.ru/images/banner_png.png" alt="PDF Icon"
+                                                 style="width:50px;height:auto;">
+                                            <br>Скачать PDF
+                                        </a>
+                                        {{ text.text }}
+                                        <div class="message-footer">
+                                            <time>{{ text.time|date:"H:i" }}</time>
+                                        </div>
+                                    </div>
+                                {% endif %}
+
                             {% endif %}
-                        {% elif text.sender == 'manager' %}
-                            {% if text.is_text %}
-                                <div class="message admin">
-                                    {{ text.text }}
-                                    <div class="message-footer">
-                                        <time>{{ text.time|date:"H:i" }}</time>
-                                    </div>
-                                </div>
-
-                            {% elif text.is_photo %}
-                                <div class="message admin">
-                                    <img src="data:image/png;base64,{{ text.get_data }}"
-                                         style="width:250px;height:auto;"
-                                         alt="Фото 1">
-                                    {{ text.text }}
-                                    <div class="message-footer">
-                                        <time>{{ text.time|date:"H:i" }}</time>
-                                    </div>
-                                </div>
-                            {% elif text.is_pdf %}
-                                <div class="message admin">
-                                    <a href="data:application/pdf;base64,{{ text.get_data }}" download="document.pdf"
-                                       title="Скачать PDF">
-                                        <img src="https://tk-lider.ru/images/banner_png.png" alt="PDF Icon"
-                                             style="width:50px;height:auto;">
-                                        <br>Скачать PDF
-                                    </a>
-                                    {{ text.text }}
-                                    <div class="message-footer">
-                                        <time>{{ text.time|date:"H:i" }}</time>
-                                    </div>
-                                </div>
-                            {% endif %}
-
-                        {% endif %}
                         {% endfor %}
                         <hr class="deal-separator">
                     {% endfor %}
@@ -651,9 +797,10 @@
 
                             {% elif text.is_photo %}
                                 <div class="message user">
-                                    <img src="data:image/png;base64,{{ text.get_data }}"
-                                         style="width:250px;height:auto;"
-                                         alt="Фото 1">
+                                    <img class="thumbnail" src="data:image/png;base64,{{ text.get_data }}"
+                 style="width:250px;height:auto;cursor:pointer;"
+                 alt="Фото 1" title="Нажмите для увеличения"
+                 data-full="data:image/png;base64,{{ text.get_data }}">
                                     {{ text.text }}
                                     <div class="message-footer">
                                         <time>{{ text.time|date:"H:i" }}</time>
@@ -680,34 +827,35 @@
                                     <div class="message-footer">
                                         <time>{{ text.time|date:"H:i" }}</time>
                                         {% if text.is_read %}
-    <svg class="icon-check" viewBox="0 0 24 24" aria-hidden="true">
-        <path d="M20.285 6.709l-11.39 11.39-5.66-5.66 1.414-1.414 4.246 4.246 9.976-9.976z"/>
-    </svg>
-{% else %}
-    <svg class="icon-check unread" viewBox="0 0 24 24" aria-hidden="true">
-        <path d="M20.285 6.709l-11.39 11.39-5.66-5.66 1.414-1.414 4.246 4.246 9.976-9.976z"/>
-    </svg>
-{% endif %}
+                                            <svg class="icon-check" viewBox="0 0 24 24" aria-hidden="true">
+                                                <path d="M20.285 6.709l-11.39 11.39-5.66-5.66 1.414-1.414 4.246 4.246 9.976-9.976z"/>
+                                            </svg>
+                                        {% else %}
+                                            <svg class="icon-check unread" viewBox="0 0 24 24" aria-hidden="true">
+                                                <path d="M20.285 6.709l-11.39 11.39-5.66-5.66 1.414-1.414 4.246 4.246 9.976-9.976z"/>
+                                            </svg>
+                                        {% endif %}
                                     </div>
                                 </div>
 
                             {% elif text.is_photo %}
                                 <div class="message admin">
-                                    <img src="data:image/png;base64,{{ text.get_data }}"
-                                         style="width:250px;height:auto;"
-                                         alt="Фото 1">
+                                    <img class="thumbnail" src="data:image/png;base64,{{ text.get_data }}"
+                 style="width:250px;height:auto;cursor:pointer;"
+                 alt="Фото 1" title="Нажмите для увеличения"
+                 data-full="data:image/png;base64,{{ text.get_data }}">
                                     {{ text.text }}
                                     <div class="message-footer">
                                         <time>{{ text.time|date:"H:i" }}</time>
                                         {% if text.is_read %}
-    <svg class="icon-check" viewBox="0 0 24 24" aria-hidden="true">
-        <path d="M20.285 6.709l-11.39 11.39-5.66-5.66 1.414-1.414 4.246 4.246 9.976-9.976z"/>
-    </svg>
-{% else %}
-    <svg class="icon-check unread" viewBox="0 0 24 24" aria-hidden="true">
-        <path d="M20.285 6.709l-11.39 11.39-5.66-5.66 1.414-1.414 4.246 4.246 9.976-9.976z"/>
-    </svg>
-{% endif %}
+                                            <svg class="icon-check" viewBox="0 0 24 24" aria-hidden="true">
+                                                <path d="M20.285 6.709l-11.39 11.39-5.66-5.66 1.414-1.414 4.246 4.246 9.976-9.976z"/>
+                                            </svg>
+                                        {% else %}
+                                            <svg class="icon-check unread" viewBox="0 0 24 24" aria-hidden="true">
+                                                <path d="M20.285 6.709l-11.39 11.39-5.66-5.66 1.414-1.414 4.246 4.246 9.976-9.976z"/>
+                                            </svg>
+                                        {% endif %}
                                     </div>
                                 </div>
                             {% elif text.is_pdf %}
@@ -722,14 +870,14 @@
                                     <div class="message-footer">
                                         <time>{{ text.time|date:"H:i" }}</time>
                                         {% if text.is_read %}
-    <svg class="icon-check" viewBox="0 0 24 24" aria-hidden="true">
-        <path d="M20.285 6.709l-11.39 11.39-5.66-5.66 1.414-1.414 4.246 4.246 9.976-9.976z"/>
-    </svg>
-{% else %}
-    <svg class="icon-check unread" viewBox="0 0 24 24" aria-hidden="true">
-        <path d="M20.285 6.709l-11.39 11.39-5.66-5.66 1.414-1.414 4.246 4.246 9.976-9.976z"/>
-    </svg>
-{% endif %}
+                                            <svg class="icon-check" viewBox="0 0 24 24" aria-hidden="true">
+                                                <path d="M20.285 6.709l-11.39 11.39-5.66-5.66 1.414-1.414 4.246 4.246 9.976-9.976z"/>
+                                            </svg>
+                                        {% else %}
+                                            <svg class="icon-check unread" viewBox="0 0 24 24" aria-hidden="true">
+                                                <path d="M20.285 6.709l-11.39 11.39-5.66-5.66 1.414-1.414 4.246 4.246 9.976-9.976z"/>
+                                            </svg>
+                                        {% endif %}
                                     </div>
                                 </div>
                             {% endif %}
@@ -1020,6 +1168,49 @@
 </main>
 
 <script>
+
+    const modal = document.getElementById('modal');
+  const modalImg = document.getElementById('modalImage');
+  const modalClose = document.getElementById('modalClose');
+
+  // Находим все миниатюры
+  const thumbnails = document.querySelectorAll('img.thumbnail');
+
+  thumbnails.forEach(img => {
+    img.addEventListener('click', () => {
+      modal.style.display = 'block';
+      // Можно брать src из дата-атрибута, если понадобится отдельный большой файл
+      modalImg.src = img.getAttribute('data-full');
+    });
+  });
+
+  // Закрытие модального окна
+  modalClose.onclick = () => {
+    modal.style.display = 'none';
+    modalImg.src = '';
+  }
+
+  // Закрытие по клику вне картинки
+  modal.onclick = (event) => {
+    if (event.target === modal) {
+      modal.style.display = 'none';
+      modalImg.src = '';
+    }
+  }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
     document.getElementById('chatTextarea').addEventListener('keydown', function (e) {
         if (e.key === 'Enter' && !e.shiftKey) {
             e.preventDefault();  // отменяем переход на новую строку
@@ -1042,6 +1233,11 @@
                 .then(response => response.json())
                 .then(data => {
                     if (data.newMessages) {
+                        // Сохраняем текст из формы перед перезагрузкой
+                        const messageInput = document.querySelector('#chatTextarea'); // Укажите правильный селектор
+                        if (messageInput) {
+                            localStorage.setItem('savedMessageText', messageInput.value);
+                        }
                         location.reload();
                     }
                 })
@@ -1050,6 +1246,19 @@
                 });
         }
     }
+
+    // Восстанавливаем текст после загрузки страницы
+    window.addEventListener('DOMContentLoaded', () => {
+        const savedText = localStorage.getItem('savedMessageText');
+        if (savedText) {
+            const messageInput = document.querySelector('#chatTextarea'); // Укажите правильный селектор
+            if (messageInput) {
+                messageInput.value = savedText;
+            }
+            // Очистим сохранённый текст, если нужно
+            localStorage.removeItem('savedMessageText');
+        }
+    });
 
     function checkNewOrder() {
         fetch(`check_new_order`)

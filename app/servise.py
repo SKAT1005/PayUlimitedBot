@@ -40,7 +40,7 @@ def get_context_main_menu(request):
         manager_chats = Order.objects.filter(type__in=['buy', 'not_find_product'], status='wait_account_approve')
     else:
         manager_chats = request.user.orders_for_manager.filter(status='dialog_with_manager').order_by(
-            '-last_message_time')
+            '-is_pin', '-last_message_time')
     context = {
         'manager_chats': manager_chats,
         'usdt_course': usdt_course,
@@ -64,6 +64,20 @@ def get_new_order(manager):
     return None
 
 
+def pin(request):
+    order_id = request.POST.get('order_id')
+    order = Order.objects.get(id=order_id)
+    order.is_pin = not order.is_pin
+    order.save(update_fields=['is_pin'])
+
+
+def save_description(request):
+    order_id = request.POST.get('order_id')
+    order = Order.objects.get(id=order_id)
+    order.description = request.POST.get('description')
+    order.save(update_fields=['description'])
+
+
 def send_manager(request):
     order_id = request.POST.get('order_id')
     order = Order.objects.get(id=order_id)
@@ -84,6 +98,9 @@ def send_message(request):
     if text or 'file' in request.FILES:
         order = Order.objects.get(id=chat_id)
         client = order.client
+        is_read = False
+        if (timezone.now() - client.last_action).total_seconds() < 90:
+            is_read = True
         is_text = True
         photo = False
         pdf = False
@@ -98,7 +115,8 @@ def send_message(request):
             else:
                 pdf = True
                 file_stream.name = file.name
-        txt = Text.objects.create(sender='manager', text=text, is_read=False, is_photo=photo, is_pdf=pdf, is_text=is_text, base64_file=base_64, order=order)
+        Text.objects.create(sender='manager', text=text, is_read=is_read, is_photo=photo, is_pdf=pdf,
+                                  is_text=is_text, base64_file=base_64, order=order)
         if request.user.is_friend:
             mailing = IndividualMailing.objects.filter(client=client).last()
             if (mailing and (mailing.time + timedelta(days=3) < timezone.now() or mailing.is_buy)) or not mailing:
@@ -107,8 +125,6 @@ def send_message(request):
                     client=client
                 )
         if client.order_id == str(order.id):
-            txt.is_read = True
-            txt.save(update_fields=['is_read'])
             try:
                 if photo:
                     bot.send_photo(chat_id=order.client.chat_id, photo=file_stream, caption=text)
@@ -244,6 +260,7 @@ def calculate_comission(order, client, manager):
         card_holder.commission_balance += card_holder_commission_balance
         card_holder.save(update_fields=['commission_balance'])
 
+
 def close_order(request):
     change_order(request)
     order_id = request.POST.get('order_id')
@@ -301,7 +318,8 @@ def close_order(request):
                 client.balance += decimal.Decimal(order.product_price)
                 client.save(update_fields=['balance'])
                 try:
-                    bot.send_message(chat_id=client.chat_id, text=f'Ваш баланс успешно пополнен на {order.product_price}$',
+                    bot.send_message(chat_id=client.chat_id,
+                                     text=f'Ваш баланс успешно пополнен на {order.product_price}$',
                                      reply_markup=buttons.go_to_menu())
                 except Exception:
                     pass
@@ -309,12 +327,15 @@ def close_order(request):
             order.status = 'complite'
             order.save()
 
+
 def close_order_friend(request):
     order_id = request.POST.get('order_id')
     order = Order.objects.get(id=order_id)
     order.pay_status = 'cansel'
     order.status = 'complite'
     order.save(update_fields=['pay_status', 'status'])
+
+
 def top_down_balance(request):
     order_id = request.POST.get('order_id')
     order = Order.objects.get(id=order_id)
